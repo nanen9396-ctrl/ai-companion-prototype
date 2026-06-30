@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Bell,
   Briefcase,
@@ -11,10 +11,10 @@ import {
   Home,
   Lamp,
   Lock,
-  Mic,
   Moon,
   Phone,
   Plus,
+  Send,
   ShieldCheck,
   SlidersHorizontal,
   Smile,
@@ -32,11 +32,18 @@ const moods = [
   { label: "很好", tone: "gold" },
 ];
 
-const memoryItems = [
+const initialMemoryItems = [
   { date: "今天 10:25", text: "你提到工作有些忙" },
   { date: "昨天 21:47", text: "你分享了喜欢的音乐" },
   { date: "05/14 18:30", text: "一起讨论了旅行计划" },
   { date: "05/12 22:10", text: "你说想养一只猫" },
+];
+
+const initialMessages = [
+  { from: "him", text: "今天过得怎么样？要不要一起听首歌放松一下。", time: "10:32" },
+  { from: "him", text: "午间心情确认：现在的心情是？我会按你的状态调整下午提醒。", time: "12:30", type: "mood" },
+  { from: "me", text: "有点累，但和你聊完好多了。", time: "10:33" },
+  { from: "him", text: "下午我再问你一次。要是你忙，我就把声音提醒换成轻提示。", time: "15:30", type: "mood" },
 ];
 
 const initialTasks = [
@@ -60,6 +67,36 @@ const tabs = [
   { id: "me", label: "我的", icon: User },
 ];
 
+const emojiOptions = ["🥺", "😊", "❤️", "🌙", "✨", "抱抱", "晚安", "想你"];
+const storageKeys = {
+  messages: "ai-companion.messages",
+  memories: "ai-companion.memories",
+};
+
+function loadStoredValue(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function nowLabel() {
+  return new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+}
+
+function memoryFromText(text) {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length < 4 || emojiOptions.includes(clean)) return "";
+  if (/^(抱抱我|想听你的声音|晚安|早安|想你)$/.test(clean)) return "";
+  const worthRemembering =
+    clean.length >= 14 ||
+    /工作|学习|考试|项目|会议|计划|提醒|明天|今天|周末|喜欢|讨厌|想要|准备|压力|焦虑|难过|开心|累|生病|电影|音乐|旅行|家|朋友/.test(clean);
+  if (!worthRemembering) return "";
+  return `你说：${clean.length > 28 ? `${clean.slice(0, 28)}...` : clean}`;
+}
+
 export function App() {
   const [mood, setMood] = useState(3);
   const [tasks, setTasks] = useState(initialTasks);
@@ -78,14 +115,12 @@ export function App() {
   const [newTaskTime, setNewTaskTime] = useState("20:00");
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskNote, setNewTaskNote] = useState("");
-  const [messages, setMessages] = useState([
-    { from: "him", text: "今天过得怎么样？要不要一起听首歌放松一下。", time: "10:32" },
-    { from: "him", text: "午间心情确认：现在的心情是？我会按你的状态调整下午提醒。", time: "12:30", type: "mood" },
-    { from: "me", text: "有点累，但和你聊完好多了。", time: "10:33" },
-    { from: "him", text: "下午我再问你一次。要是你忙，我就把声音提醒换成轻提示。", time: "15:30", type: "mood" },
-  ]);
+  const [messages, setMessages] = useState(() => loadStoredValue(storageKeys.messages, initialMessages));
+  const [memoryItems, setMemoryItems] = useState(() => loadStoredValue(storageKeys.memories, initialMemoryItems));
   const [draft, setDraft] = useState("");
   const [isReplying, setIsReplying] = useState(false);
+  const [showTools, setShowTools] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
 
   const activeMood = moods[mood];
   const completedCount = useMemo(() => tasks.filter((task) => task.done).length, [tasks]);
@@ -112,6 +147,23 @@ export function App() {
       line: "今天想先说哪一件事？我会记得你的节奏。",
     };
   }, [draft, messages, mood]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKeys.messages, JSON.stringify(messages.slice(-80)));
+  }, [messages]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKeys.memories, JSON.stringify(memoryItems.slice(0, 30)));
+  }, [memoryItems]);
+
+  function rememberMessage(text) {
+    const memory = memoryFromText(text);
+    if (!memory) return;
+    setMemoryItems((current) => {
+      if (current.some((item) => item.text === memory)) return current;
+      return [{ date: `刚刚 ${nowLabel()}`, text: memory }, ...current].slice(0, 12);
+    });
+  }
 
   function toggleTask(taskId) {
     setTasks((current) =>
@@ -157,14 +209,17 @@ export function App() {
     }
   }
 
-  async function sendMessage() {
-    const text = draft.trim();
+  async function sendMessage(forcedText) {
+    const text = (forcedText ?? draft).trim();
     if (!text || isReplying) return;
 
-    const outgoing = { from: "me", text, time: "现在" };
+    const outgoing = { from: "me", text, time: nowLabel() };
     const nextMessages = [...messages, outgoing];
     setMessages(nextMessages);
+    rememberMessage(text);
     setDraft("");
+    setShowTools(false);
+    setShowEmoji(false);
     setIsReplying(true);
 
     try {
@@ -183,16 +238,20 @@ export function App() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || "DeepSeek request failed");
-      setMessages((current) => [...current, { from: "him", text: data.reply, time: "刚刚" }]);
+      setMessages((current) => [...current, { from: "him", text: data.reply, time: nowLabel() }]);
     } catch (error) {
       console.error(error);
       setMessages((current) => [
         ...current,
-        { from: "system", text: `DeepSeek 未连接：${error.message}`, time: "刚刚" },
+        { from: "system", text: `DeepSeek 未连接：${error.message}`, time: nowLabel() },
       ]);
     } finally {
       setIsReplying(false);
     }
+  }
+
+  function chooseEmoji(emoji) {
+    sendMessage(emoji);
   }
 
   return (
@@ -234,8 +293,8 @@ export function App() {
             <div className="ai-badge">
               <ShieldCheck size={18} />
               <span>
-                AI 伙伴
-                <small>内容由 AI 生成，仅供参考</small>
+                陆闻澈
+                <small>在线</small>
               </span>
             </div>
             <div className="hero-actions">
@@ -250,22 +309,8 @@ export function App() {
 
           <div className="model-copy">
             <h2>陆闻澈</h2>
-            <p>你的专属 AI 伴侣与生活助理</p>
-            <span className="relation-chip">关系阶段 · 靠近的我们</span>
-            <strong>{modelState.line}</strong>
-          </div>
-
-          <div className="call-card">
-            <span className="voice-wave">
-              <Volume2 size={22} />
-            </span>
-            <p>
-              想听你的声音
-              <small>和我通个电话吧</small>
-            </p>
-            <button type="button" aria-label="发起通话">
-              <Phone size={20} />
-            </button>
+            <p>在这里，听你说。</p>
+            <span className="relation-chip">{modelState.label}</span>
           </div>
           <img src={modelState.src} alt={`原创 AI 模型半身：${modelState.label}`} />
         </section>
@@ -279,7 +324,7 @@ export function App() {
           <div className="today-grid">
             <div className="chat-preview">
               <div className="chat-window">
-                {messages.slice(-4).map((message, index) => (
+                {messages.slice(-6).map((message, index) => (
                   <div className={`message ${message.from}`} key={`${message.time}-${index}`}>
                     <p>{message.text}</p>
                     <span>{message.time}</span>
@@ -498,9 +543,29 @@ export function App() {
             sendMessage();
           }}
         >
-          <button className="voice-button" type="button" aria-label="语音输入">
-            <Mic size={24} />
+          <button
+            className="voice-button"
+            type="button"
+            aria-label="更多对话选项"
+            onClick={() => {
+              setShowTools((value) => !value);
+              setShowEmoji(false);
+            }}
+          >
+            <Plus size={24} />
           </button>
+          {showTools && (
+            <div className="composer-popover tools-menu">
+              <button type="button" onClick={() => sendMessage("想听你的声音")}>
+                <Phone size={18} />
+                <span>想听你的声音</span>
+              </button>
+              <button type="button" onClick={() => sendMessage("抱抱我")}>
+                <Heart size={18} />
+                <span>抱抱我</span>
+              </button>
+            </div>
+          )}
           <input
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
@@ -508,11 +573,28 @@ export function App() {
             aria-label="输入给陆闻澈的消息"
             disabled={isReplying}
           />
-          <button className="icon-button" type="button" aria-label="表情">
+          <button
+            className="icon-button"
+            type="button"
+            aria-label="表情"
+            onClick={() => {
+              setShowEmoji((value) => !value);
+              setShowTools(false);
+            }}
+          >
             <Smile size={23} />
           </button>
+          {showEmoji && (
+            <div className="composer-popover emoji-menu">
+              {emojiOptions.map((emoji) => (
+                <button key={emoji} type="button" onClick={() => chooseEmoji(emoji)}>
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
           <button className="send-button" type="submit" aria-label="发送" disabled={isReplying}>
-            <Plus size={28} />
+            <Send size={22} />
           </button>
         </form>
 
