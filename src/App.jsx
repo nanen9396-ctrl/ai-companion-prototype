@@ -86,6 +86,10 @@ function nowLabel() {
   return new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
 }
 
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function memoryFromText(text) {
   const clean = text.replace(/\s+/g, " ").trim();
   if (clean.length < 4 || emojiOptions.includes(clean)) return "";
@@ -209,6 +213,21 @@ export function App() {
     }
   }
 
+  async function typeAssistantReply(text) {
+    const id = Date.now();
+    const time = nowLabel();
+    const chars = Array.from(text || "我在。你慢慢说。");
+    setMessages((current) => [...current, { id, from: "him", text: "", time }]);
+
+    for (let index = 0; index < chars.length; index += 2) {
+      await wait(28);
+      const nextText = chars.slice(0, index + 2).join("");
+      setMessages((current) =>
+        current.map((message) => (message.id === id ? { ...message, text: nextText } : message)),
+      );
+    }
+  }
+
   async function sendMessage(forcedText) {
     const text = (forcedText ?? draft).trim();
     if (!text || isReplying) return;
@@ -238,7 +257,7 @@ export function App() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || "DeepSeek request failed");
-      setMessages((current) => [...current, { from: "him", text: data.reply, time: nowLabel() }]);
+      await typeAssistantReply(data.reply);
     } catch (error) {
       console.error(error);
       setMessages((current) => [
@@ -251,7 +270,8 @@ export function App() {
   }
 
   function chooseEmoji(emoji) {
-    sendMessage(emoji);
+    setDraft((current) => `${current}${current ? " " : ""}${emoji}`);
+    setShowEmoji(false);
   }
 
   return (
@@ -297,14 +317,6 @@ export function App() {
                 <small>在线</small>
               </span>
             </div>
-            <div className="hero-actions">
-              <button type="button" aria-label="通知">
-                <Bell size={19} />
-              </button>
-              <button type="button" aria-label="设置">
-                <SlidersHorizontal size={19} />
-              </button>
-            </div>
           </div>
 
           <div className="model-copy">
@@ -345,7 +357,7 @@ export function App() {
                     )}
                   </div>
                 ))}
-                {isReplying && (
+                {isReplying && messages.at(-1)?.from !== "him" && (
                   <div className="message him typing">
                     <p>他正在回复...</p>
                   </div>
@@ -608,6 +620,17 @@ export function App() {
               <h2 id="personal-title">个人中心</h2>
               <span>{redeemedCode ? "已激活专属席位" : "等待激活码绑定"}</span>
             </div>
+          </div>
+
+          <div className="profile-actions" aria-label="个人功能">
+            <button type="button">
+              <Bell size={18} />
+              <span>通知</span>
+            </button>
+            <button type="button">
+              <SlidersHorizontal size={18} />
+              <span>偏好</span>
+            </button>
           </div>
 
           <form
