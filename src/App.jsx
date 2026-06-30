@@ -133,20 +133,20 @@ export function App() {
     const text = `${draft} ${messages.map((message) => message.text).slice(-3).join(" ")}`;
     if (mood <= 1 || /累|难过|焦虑|害怕|烦|压力|哭|不开心|生病/.test(text)) {
       return {
-        src: "/assets/model-concern.png",
+        src: "/assets/model-noble-hero.png",
         label: "关切地靠近你",
         line: "我在听。先把呼吸放慢一点，剩下的我们一起拆开。",
       };
     }
     if (/谢谢|好多了|喜欢|开心|想你|陪|晚安|早安/.test(text) || messages.at(-1)?.from === "me") {
       return {
-        src: "/assets/model-warm.png",
+        src: "/assets/model-noble-hero.png",
         label: "温柔地回应你",
         line: "嗯，我收到你的心情了。今天也会站在你这边。",
       };
     }
     return {
-      src: "/assets/model-listening.png",
+      src: "/assets/model-noble-hero.png",
       label: "认真听你说话",
       line: "今天想先说哪一件事？我会记得你的节奏。",
     };
@@ -309,21 +309,6 @@ export function App() {
         </header>
 
         <section className="model-stage" aria-label={`模型状态：${modelState.label}`}>
-          <div className="hero-topline">
-            <div className="ai-badge">
-              <ShieldCheck size={18} />
-              <span>
-                陆闻澈
-                <small>在线</small>
-              </span>
-            </div>
-          </div>
-
-          <div className="model-copy">
-            <h2>陆闻澈</h2>
-            <p>在这里，听你说。</p>
-            <span className="relation-chip">{modelState.label}</span>
-          </div>
           <img src={modelState.src} alt={`原创 AI 模型半身：${modelState.label}`} />
         </section>
 
