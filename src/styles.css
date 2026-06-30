@@ -101,8 +101,8 @@ button {
 
 .model-stage {
   display: none;
-  min-height: 510px;
-  margin: -32px -18px -22px;
+  min-height: 548px;
+  margin: -38px -18px -30px;
   padding: 0;
   border-radius: 0 0 34px 34px;
   position: relative;
@@ -128,6 +128,24 @@ button {
   background-size: 240% 240%, 100% 100%;
   animation: portrait-glare 7s ease-in-out infinite;
   pointer-events: none;
+}
+
+.model-stage.model-warm::before {
+  background:
+    linear-gradient(115deg, transparent 45%, rgba(255, 255, 255, 0.24) 52%, transparent 61%),
+    linear-gradient(180deg, rgba(92, 63, 74, 0.03) 0%, transparent 44%, rgba(171, 130, 108, 0.18) 72%, rgba(252, 246, 240, 0.92) 100%);
+}
+
+.model-stage.model-concern::before {
+  background:
+    linear-gradient(115deg, transparent 45%, rgba(255, 255, 255, 0.18) 52%, transparent 61%),
+    linear-gradient(180deg, rgba(29, 38, 58, 0.08) 0%, transparent 42%, rgba(74, 79, 111, 0.2) 72%, rgba(246, 247, 250, 0.94) 100%);
+}
+
+.model-stage.model-guard::before {
+  background:
+    linear-gradient(115deg, transparent 45%, rgba(255, 255, 255, 0.15) 52%, transparent 61%),
+    linear-gradient(180deg, rgba(12, 16, 28, 0.04) 0%, transparent 39%, rgba(20, 25, 42, 0.28) 72%, rgba(244, 242, 247, 0.94) 100%);
 }
 
 .model-stage img {
@@ -296,9 +314,9 @@ button {
 }
 
 .today-panel {
-  border-radius: 24px;
-  padding: 14px 13px 13px;
-  margin: -36px 0 14px;
+  border-radius: 22px;
+  padding: 11px 11px 12px;
+  margin: -48px 0 12px;
   min-width: 0;
 }
 
@@ -311,7 +329,7 @@ button {
 
 .section-title {
   gap: 10px;
-  margin-bottom: 9px;
+  margin-bottom: 7px;
 }
 
 .section-title h1,
@@ -323,7 +341,7 @@ button {
 }
 
 .section-title h1 {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 650;
 }
 
@@ -349,16 +367,16 @@ button {
 
 .chat-preview {
   min-width: 0;
-  border-radius: 19px;
+  border-radius: 17px;
   background: linear-gradient(145deg, rgba(255, 246, 240, 0.92), rgba(246, 239, 247, 0.64));
-  padding: 13px;
+  padding: 10px;
 }
 
 .chat-window {
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  min-height: 230px;
+  gap: 8px;
+  min-height: 194px;
   justify-content: flex-end;
 }
 
@@ -1128,6 +1146,118 @@ button {
   color: var(--teal-deep);
 }
 
+.profile-actions strong {
+  min-width: 19px;
+  height: 19px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--rose);
+  font-size: 11px;
+}
+
+.preference-panel,
+.notification-panel {
+  margin-bottom: 16px;
+}
+
+.preference-panel h3,
+.notification-panel h3 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.preference-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.preference-option {
+  min-height: 72px;
+  padding: 12px;
+  display: grid;
+  gap: 5px;
+  text-align: left;
+  border-radius: 17px;
+  border: 1px solid rgba(121, 79, 111, 0.12);
+  background: rgba(255, 255, 255, 0.66);
+  color: var(--ink);
+}
+
+.preference-option.active {
+  border-color: rgba(122, 103, 163, 0.42);
+  background: linear-gradient(145deg, rgba(244, 239, 255, 0.94), rgba(255, 248, 244, 0.88));
+  box-shadow: 0 14px 30px rgba(94, 75, 116, 0.1);
+}
+
+.preference-option span {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.preference-option small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.notification-list {
+  display: grid;
+  gap: 8px;
+}
+
+.notification-item {
+  width: 100%;
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 12px;
+  border-radius: 17px;
+  border: 1px solid rgba(121, 79, 111, 0.1);
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--ink);
+  text-align: left;
+}
+
+.notification-item.unread {
+  border-color: rgba(122, 103, 163, 0.3);
+  background: rgba(248, 244, 255, 0.9);
+}
+
+.notification-item span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.notification-item strong {
+  font-size: 14px;
+}
+
+.notification-item small,
+.notification-item time,
+.notification-empty {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.notification-item time {
+  white-space: nowrap;
+}
+
+.notification-empty {
+  margin: 0;
+  padding: 12px;
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
 .redeem-box label {
   display: block;
   margin-bottom: 9px;
@@ -1251,7 +1381,7 @@ button {
   }
 
   .today-panel {
-    padding: 17px 13px 14px;
+    padding: 11px 11px 12px;
   }
 
   .today-grid,

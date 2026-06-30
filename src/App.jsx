@@ -71,7 +71,17 @@ const emojiOptions = ["🥺", "😊", "❤️", "🌙", "✨", "抱抱", "晚安
 const storageKeys = {
   messages: "ai-companion.messages",
   memories: "ai-companion.memories",
+  notifications: "ai-companion.notifications",
+  preferences: "ai-companion.preferences",
+  notifiedTasks: "ai-companion.notifiedTasks",
 };
+
+const preferenceOptions = [
+  { key: "gentle", label: "说话更温柔", note: "多安抚，少冷感" },
+  { key: "clingy", label: "更黏人一点", note: "增加专属感和陪伴感" },
+  { key: "concise", label: "回复更简短", note: "适合碎片时间聊天" },
+  { key: "ritual", label: "加强仪式感", note: "早晚安、纪念日、问候更多" },
+];
 
 function loadStoredValue(key, fallback) {
   try {
@@ -121,6 +131,9 @@ export function App() {
   const [newTaskNote, setNewTaskNote] = useState("");
   const [messages, setMessages] = useState(() => loadStoredValue(storageKeys.messages, initialMessages));
   const [memoryItems, setMemoryItems] = useState(() => loadStoredValue(storageKeys.memories, initialMemoryItems));
+  const [notifications, setNotifications] = useState(() => loadStoredValue(storageKeys.notifications, []));
+  const [preferences, setPreferences] = useState(() => loadStoredValue(storageKeys.preferences, ["gentle"]));
+  const [notifiedTaskKeys, setNotifiedTaskKeys] = useState(() => loadStoredValue(storageKeys.notifiedTasks, []));
   const [draft, setDraft] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [showTools, setShowTools] = useState(false);
@@ -128,29 +141,46 @@ export function App() {
 
   const activeMood = moods[mood];
   const completedCount = useMemo(() => tasks.filter((task) => task.done).length, [tasks]);
+  const unreadCount = notifications.filter((item) => !item.read).length;
   const pageClass = `tab-${activeTab}`;
   const modelState = useMemo(() => {
-    const text = `${draft} ${messages.map((message) => message.text).slice(-3).join(" ")}`;
+    const recentText = messages
+      .filter((message) => message.from === "me")
+      .map((message) => message.text)
+      .slice(-4)
+      .join(" ");
+    const text = `${draft} ${recentText}`;
     if (mood <= 1 || /累|难过|焦虑|害怕|烦|压力|哭|不开心|生病/.test(text)) {
       return {
-        src: "/assets/model-noble-hero.png",
+        src: "/assets/model-noble-concern.png",
+        tone: "concern",
         label: "关切地靠近你",
         line: "我在听。先把呼吸放慢一点，剩下的我们一起拆开。",
       };
     }
+    if (/别人|同事|男|约|危险|门锁|燃气|摄像头|离家|回家|空调|灯|窗帘|智能|管家/.test(text) || activeTab === "smart") {
+      return {
+        src: "/assets/model-noble-guard.png",
+        tone: "guard",
+        label: "克制地护着你",
+        line: "我会先确认安全，再替你执行。",
+      };
+    }
     if (/谢谢|好多了|喜欢|开心|想你|陪|晚安|早安/.test(text) || messages.at(-1)?.from === "me") {
       return {
-        src: "/assets/model-noble-hero.png",
+        src: "/assets/model-noble-warm.png",
+        tone: "warm",
         label: "温柔地回应你",
         line: "嗯，我收到你的心情了。今天也会站在你这边。",
       };
     }
     return {
       src: "/assets/model-noble-hero.png",
+      tone: "calm",
       label: "认真听你说话",
       line: "今天想先说哪一件事？我会记得你的节奏。",
     };
-  }, [draft, messages, mood]);
+  }, [activeTab, draft, messages, mood]);
 
   useEffect(() => {
     localStorage.setItem(storageKeys.messages, JSON.stringify(messages.slice(-80)));
@@ -160,6 +190,42 @@ export function App() {
     localStorage.setItem(storageKeys.memories, JSON.stringify(memoryItems.slice(0, 30)));
   }, [memoryItems]);
 
+  useEffect(() => {
+    localStorage.setItem(storageKeys.notifications, JSON.stringify(notifications.slice(0, 30)));
+  }, [notifications]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKeys.preferences, JSON.stringify(preferences));
+  }, [preferences]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKeys.notifiedTasks, JSON.stringify(notifiedTaskKeys.slice(-80)));
+  }, [notifiedTaskKeys]);
+
+  useEffect(() => {
+    function checkDueTasks() {
+      const now = new Date();
+      const today = now.toISOString().slice(0, 10);
+      const current = now.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", hour12: false });
+      tasks.forEach((task) => {
+        const key = `${today}-${task.id}-${task.time}`;
+        if (!task.done && task.time === current && !notifiedTaskKeys.includes(key)) {
+          addNotification({
+            title: "今日安排提醒",
+            text: `${task.time} · ${task.title}`,
+            tab: "record",
+            view: "schedule",
+          });
+          setNotifiedTaskKeys((items) => [...items, key]);
+        }
+      });
+    }
+
+    checkDueTasks();
+    const timer = window.setInterval(checkDueTasks, 30000);
+    return () => window.clearInterval(timer);
+  }, [notifiedTaskKeys, tasks]);
+
   function rememberMessage(text) {
     const memory = memoryFromText(text);
     if (!memory) return;
@@ -167,6 +233,32 @@ export function App() {
       if (current.some((item) => item.text === memory)) return current;
       return [{ date: `刚刚 ${nowLabel()}`, text: memory }, ...current].slice(0, 12);
     });
+  }
+
+  function addNotification(item) {
+    setNotifications((current) => [
+      {
+        id: Date.now(),
+        time: nowLabel(),
+        read: false,
+        ...item,
+      },
+      ...current,
+    ].slice(0, 20));
+  }
+
+  function openNotification(item) {
+    if (item.tab) setActiveTab(item.tab);
+    if (item.view) setRecordView(item.view);
+    setNotifications((current) =>
+      current.map((notification) => (notification.id === item.id ? { ...notification, read: true } : notification)),
+    );
+  }
+
+  function togglePreference(key) {
+    setPreferences((current) =>
+      current.includes(key) ? current.filter((item) => item !== key) : [...current, key],
+    );
   }
 
   function toggleTask(taskId) {
@@ -204,12 +296,24 @@ export function App() {
       return;
     }
     setActiveScene(sceneId);
+    const scene = scenes.find((item) => item.id === sceneId);
+    addNotification({
+      title: "智能管家已调整",
+      text: scene ? `已切换到${scene.label}` : "场景已执行",
+      tab: "smart",
+    });
   }
 
   function confirmScene() {
     if (pendingScene) {
+      const scene = scenes.find((item) => item.id === pendingScene);
       setActiveScene(pendingScene);
       setPendingScene(null);
+      addNotification({
+        title: "智能管家已执行",
+        text: scene ? `已确认并开启${scene.label}` : "已确认高风险场景",
+        tab: "smart",
+      });
     }
   }
 
@@ -253,6 +357,7 @@ export function App() {
               role: message.from === "him" ? "assistant" : "user",
               content: message.text,
             })),
+          preferences,
         }),
       });
       const data = await response.json();
@@ -308,7 +413,7 @@ export function App() {
           </div>
         </header>
 
-        <section className="model-stage" aria-label={`模型状态：${modelState.label}`}>
+        <section className={`model-stage model-${modelState.tone}`} aria-label={`模型状态：${modelState.label}`}>
           <img src={modelState.src} alt={`原创 AI 模型半身：${modelState.label}`} />
         </section>
 
@@ -611,12 +716,54 @@ export function App() {
             <button type="button">
               <Bell size={18} />
               <span>通知</span>
+              {unreadCount > 0 && <strong>{unreadCount}</strong>}
             </button>
             <button type="button">
               <SlidersHorizontal size={18} />
               <span>偏好</span>
             </button>
           </div>
+
+          <section className="preference-panel" aria-label="对话偏好">
+            <h3>他说话的方式</h3>
+            <div className="preference-grid">
+              {preferenceOptions.map((option) => (
+                <button
+                  className={preferences.includes(option.key) ? "preference-option active" : "preference-option"}
+                  key={option.key}
+                  type="button"
+                  onClick={() => togglePreference(option.key)}
+                >
+                  <span>{option.label}</span>
+                  <small>{option.note}</small>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="notification-panel" aria-label="通知记录">
+            <h3>通知</h3>
+            {notifications.length === 0 ? (
+              <p className="notification-empty">暂无通知，今日安排和智能管家会在这里提醒你。</p>
+            ) : (
+              <div className="notification-list">
+                {notifications.slice(0, 6).map((item) => (
+                  <button
+                    className={item.read ? "notification-item" : "notification-item unread"}
+                    key={item.id}
+                    type="button"
+                    onClick={() => openNotification(item)}
+                  >
+                    <span>
+                      <strong>{item.title}</strong>
+                      <small>{item.text}</small>
+                    </span>
+                    <time>{item.time}</time>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
 
           <form
             className="redeem-box"
