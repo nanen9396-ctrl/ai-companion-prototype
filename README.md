@@ -9,6 +9,13 @@ pnpm install
 pnpm run dev
 ```
 
+Create `.env.local` for real local chat:
+
+```bash
+DEEPSEEK_API_KEY=sk-your-deepseek-api-key
+DEEPSEEK_MODEL=deepseek-v4-flash
+```
+
 ## Build
 
 ```bash
@@ -25,5 +32,13 @@ Recommended setup:
    - Install command: `pnpm install`
    - Build command: `pnpm run build`
    - Output directory: `dist`
-4. Every future code update pushed to GitHub will update the same Vercel project link.
+4. Add environment variables in Vercel:
+   - `DEEPSEEK_API_KEY`: your DeepSeek API key
+   - `DEEPSEEK_MODEL`: optional, defaults to `deepseek-v4-flash`
+5. Every future code update pushed to GitHub will update the same Vercel project link.
 
+## DeepSeek Chat
+
+The browser calls `/api/chat`; the serverless route reads `DEEPSEEK_API_KEY` and forwards messages to DeepSeek. Do not put the API key in frontend code.
+
+Plain `pnpm run dev` also serves `/api/chat` locally.

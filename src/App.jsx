@@ -85,6 +85,7 @@ export function App() {
     { from: "him", text: "下午我再问你一次。要是你忙，我就把声音提醒换成轻提示。", time: "15:30", type: "mood" },
   ]);
   const [draft, setDraft] = useState("");
+  const [isReplying, setIsReplying] = useState(false);
 
   const activeMood = moods[mood];
   const completedCount = useMemo(() => tasks.filter((task) => task.done).length, [tasks]);
@@ -156,16 +157,42 @@ export function App() {
     }
   }
 
-  function sendMessage() {
+  async function sendMessage() {
     const text = draft.trim();
-    if (!text) return;
+    if (!text || isReplying) return;
 
-    setMessages((current) => [
-      ...current,
-      { from: "me", text, time: "现在" },
-      { from: "him", text: "我记下了。今晚我会把提醒调得轻一点，别让你太紧绷。", time: "刚刚" },
-    ]);
+    const outgoing = { from: "me", text, time: "现在" };
+    const nextMessages = [...messages, outgoing];
+    setMessages(nextMessages);
     setDraft("");
+    setIsReplying(true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: nextMessages
+            .filter((message) => message.from === "me" || message.from === "him")
+            .slice(-12)
+            .map((message) => ({
+              role: message.from === "him" ? "assistant" : "user",
+              content: message.text,
+            })),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || "DeepSeek request failed");
+      setMessages((current) => [...current, { from: "him", text: data.reply, time: "刚刚" }]);
+    } catch (error) {
+      console.error(error);
+      setMessages((current) => [
+        ...current,
+        { from: "system", text: `DeepSeek 未连接：${error.message}`, time: "刚刚" },
+      ]);
+    } finally {
+      setIsReplying(false);
+    }
   }
 
   return (
@@ -273,6 +300,11 @@ export function App() {
                     )}
                   </div>
                 ))}
+                {isReplying && (
+                  <div className="message him typing">
+                    <p>他正在回复...</p>
+                  </div>
+                )}
               </div>
               <button className="link-button" type="button">
                 查看全部对话
@@ -472,13 +504,14 @@ export function App() {
           <input
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            placeholder="有什么想对他说..."
+            placeholder={isReplying ? "等他回复中..." : "有什么想对他说..."}
             aria-label="输入给陆闻澈的消息"
+            disabled={isReplying}
           />
           <button className="icon-button" type="button" aria-label="表情">
             <Smile size={23} />
           </button>
-          <button className="send-button" type="submit" aria-label="发送">
+          <button className="send-button" type="submit" aria-label="发送" disabled={isReplying}>
             <Plus size={28} />
           </button>
         </form>
