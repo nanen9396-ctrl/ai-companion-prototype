@@ -25,6 +25,8 @@ import {
   X,
 } from "lucide-react";
 
+const companionName = "夏萧因";
+
 const moods = [
   { label: "低落", tone: "cool" },
   { label: "疲惫", tone: "mist" },
@@ -74,6 +76,7 @@ const storageKeys = {
   notifications: "ai-companion.notifications",
   preferences: "ai-companion.preferences",
   notifiedTasks: "ai-companion.notifiedTasks",
+  modelTone: "ai-companion.modelTone",
 };
 
 const preferenceOptions = [
@@ -81,6 +84,39 @@ const preferenceOptions = [
   { key: "clingy", label: "更黏人一点", note: "增加专属感和陪伴感" },
   { key: "concise", label: "回复更简短", note: "适合碎片时间聊天" },
   { key: "ritual", label: "加强仪式感", note: "早晚安、纪念日、问候更多" },
+  { key: "jealous", label: "吃醋感更强", note: "嘴硬但会主动哄你" },
+  { key: "protective", label: "护短更明显", note: "重要时刻更可靠" },
+];
+
+const modelStates = {
+  calm: {
+    src: "/assets/model-noble-hero.png",
+    tone: "calm",
+    label: "认真听你说话",
+  },
+  warm: {
+    src: "/assets/model-noble-warm.png",
+    tone: "warm",
+    label: "温柔地回应你",
+  },
+  concern: {
+    src: "/assets/model-noble-concern.png",
+    tone: "concern",
+    label: "关切地靠近你",
+  },
+  guard: {
+    src: "/assets/model-noble-guard.png",
+    tone: "guard",
+    label: "克制地护着你",
+  },
+};
+
+const quickActions = [
+  { key: "voice", label: "想听你的声音", text: "想听你的声音", icon: Phone },
+  { key: "hug", label: "抱抱我", text: "抱抱我", icon: Heart },
+  { key: "hand", label: "牵牵手", text: "牵牵手", icon: Heart },
+  { key: "pat", label: "摸摸头", text: "摸摸头", icon: Smile },
+  { key: "stay", label: "陪我一会儿", text: "陪我一会儿", icon: Moon },
 ];
 
 function loadStoredValue(key, fallback) {
@@ -111,6 +147,15 @@ function memoryFromText(text) {
   return `你说：${clean.length > 28 ? `${clean.slice(0, 28)}...` : clean}`;
 }
 
+function inferModelTone(text, moodValue) {
+  if (moodValue <= 1 || /累|难过|焦虑|害怕|烦|压力|哭|不开心|生病/.test(text)) return "concern";
+  if (/别人|同事|男|约|危险|门锁|燃气|摄像头|离家|回家|空调|灯|窗帘|智能|管家/.test(text)) {
+    return "guard";
+  }
+  if (/谢谢|好多了|喜欢|开心|想你|陪|晚安|早安|抱抱|牵|摸摸头|声音/.test(text)) return "warm";
+  return "calm";
+}
+
 export function App() {
   const [mood, setMood] = useState(3);
   const [tasks, setTasks] = useState(initialTasks);
@@ -134,6 +179,9 @@ export function App() {
   const [notifications, setNotifications] = useState(() => loadStoredValue(storageKeys.notifications, []));
   const [preferences, setPreferences] = useState(() => loadStoredValue(storageKeys.preferences, ["gentle"]));
   const [notifiedTaskKeys, setNotifiedTaskKeys] = useState(() => loadStoredValue(storageKeys.notifiedTasks, []));
+  const [modelTone, setModelTone] = useState(() => loadStoredValue(storageKeys.modelTone, "calm"));
+  const [profilePanel, setProfilePanel] = useState(null);
+  const [hugging, setHugging] = useState(false);
   const [draft, setDraft] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [showTools, setShowTools] = useState(false);
@@ -143,44 +191,7 @@ export function App() {
   const completedCount = useMemo(() => tasks.filter((task) => task.done).length, [tasks]);
   const unreadCount = notifications.filter((item) => !item.read).length;
   const pageClass = `tab-${activeTab}`;
-  const modelState = useMemo(() => {
-    const recentText = messages
-      .filter((message) => message.from === "me")
-      .map((message) => message.text)
-      .slice(-4)
-      .join(" ");
-    const text = `${draft} ${recentText}`;
-    if (mood <= 1 || /累|难过|焦虑|害怕|烦|压力|哭|不开心|生病/.test(text)) {
-      return {
-        src: "/assets/model-noble-concern.png",
-        tone: "concern",
-        label: "关切地靠近你",
-        line: "我在听。先把呼吸放慢一点，剩下的我们一起拆开。",
-      };
-    }
-    if (/别人|同事|男|约|危险|门锁|燃气|摄像头|离家|回家|空调|灯|窗帘|智能|管家/.test(text) || activeTab === "smart") {
-      return {
-        src: "/assets/model-noble-guard.png",
-        tone: "guard",
-        label: "克制地护着你",
-        line: "我会先确认安全，再替你执行。",
-      };
-    }
-    if (/谢谢|好多了|喜欢|开心|想你|陪|晚安|早安/.test(text) || messages.at(-1)?.from === "me") {
-      return {
-        src: "/assets/model-noble-warm.png",
-        tone: "warm",
-        label: "温柔地回应你",
-        line: "嗯，我收到你的心情了。今天也会站在你这边。",
-      };
-    }
-    return {
-      src: "/assets/model-noble-hero.png",
-      tone: "calm",
-      label: "认真听你说话",
-      line: "今天想先说哪一件事？我会记得你的节奏。",
-    };
-  }, [activeTab, draft, messages, mood]);
+  const modelState = modelStates[modelTone] || modelStates.calm;
 
   useEffect(() => {
     localStorage.setItem(storageKeys.messages, JSON.stringify(messages.slice(-80)));
@@ -201,6 +212,10 @@ export function App() {
   useEffect(() => {
     localStorage.setItem(storageKeys.notifiedTasks, JSON.stringify(notifiedTaskKeys.slice(-80)));
   }, [notifiedTaskKeys]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKeys.modelTone, JSON.stringify(modelTone));
+  }, [modelTone]);
 
   useEffect(() => {
     function checkDueTasks() {
@@ -233,6 +248,10 @@ export function App() {
       if (current.some((item) => item.text === memory)) return current;
       return [{ date: `刚刚 ${nowLabel()}`, text: memory }, ...current].slice(0, 12);
     });
+  }
+
+  function addTimelineMemory(text) {
+    setMemoryItems((current) => [{ date: `刚刚 ${nowLabel()}`, text }, ...current].slice(0, 12));
   }
 
   function addNotification(item) {
@@ -291,6 +310,7 @@ export function App() {
   }
 
   function requestScene(sceneId) {
+    setModelTone("guard");
     if (sceneId === "away") {
       setPendingScene(sceneId);
       return;
@@ -306,6 +326,7 @@ export function App() {
 
   function confirmScene() {
     if (pendingScene) {
+      setModelTone("guard");
       const scene = scenes.find((item) => item.id === pendingScene);
       setActiveScene(pendingScene);
       setPendingScene(null);
@@ -338,6 +359,7 @@ export function App() {
 
     const outgoing = { from: "me", text, time: nowLabel() };
     const nextMessages = [...messages, outgoing];
+    setModelTone(inferModelTone(text, mood));
     setMessages(nextMessages);
     rememberMessage(text);
     setDraft("");
@@ -379,12 +401,23 @@ export function App() {
     setShowEmoji(false);
   }
 
+  async function handleQuickAction(action) {
+    setShowTools(false);
+    if (action.key === "hug") {
+      addTimelineMemory(`${nowLabel()}，我抱了抱你`);
+      setHugging(false);
+      window.setTimeout(() => setHugging(true), 0);
+      window.setTimeout(() => setHugging(false), 2300);
+    }
+    await sendMessage(action.text);
+  }
+
   return (
     <main className="app-shell">
       <section className={`app-home ${pageClass}`} aria-label="AI 陪伴助手首页">
         <header className="hero">
           <div className="portrait-wrap">
-            <img src="/assets/companion-avatar.png" alt="原创 AI 角色陆闻澈头像" />
+            <img src="/assets/model-noble-warm.png" alt={`${companionName} 头像`} />
             <span className="presence-dot" aria-label="在线" />
           </div>
 
@@ -414,7 +447,7 @@ export function App() {
         </header>
 
         <section className={`model-stage model-${modelState.tone}`} aria-label={`模型状态：${modelState.label}`}>
-          <img src={modelState.src} alt={`原创 AI 模型半身：${modelState.label}`} />
+          <img src={modelState.src} alt={`${companionName} 模型半身：${modelState.label}`} />
         </section>
 
         <section className="today-panel" aria-labelledby="today-title">
@@ -658,21 +691,22 @@ export function App() {
           </button>
           {showTools && (
             <div className="composer-popover tools-menu">
-              <button type="button" onClick={() => sendMessage("想听你的声音")}>
-                <Phone size={18} />
-                <span>想听你的声音</span>
-              </button>
-              <button type="button" onClick={() => sendMessage("抱抱我")}>
-                <Heart size={18} />
-                <span>抱抱我</span>
-              </button>
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <button key={action.key} type="button" onClick={() => handleQuickAction(action)}>
+                    <Icon size={18} />
+                    <span>{action.label}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
           <input
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder={isReplying ? "等他回复中..." : "有什么想对他说..."}
-            aria-label="输入给陆闻澈的消息"
+            aria-label={`输入给${companionName}的消息`}
             disabled={isReplying}
           />
           <button
@@ -703,7 +737,7 @@ export function App() {
         <section className="surface personal-center" aria-labelledby="personal-title">
           <div className="profile-card">
             <div className="profile-avatar">
-              <img src="/assets/companion-avatar.png" alt="原创 AI 角色陆闻澈头像" />
+              <img src="/assets/model-noble-warm.png" alt={`${companionName} 头像`} />
             </div>
             <div>
               <p className="profile-kicker">一对一陪伴服务</p>
@@ -713,57 +747,69 @@ export function App() {
           </div>
 
           <div className="profile-actions" aria-label="个人功能">
-            <button type="button">
+            <button
+              className={profilePanel === "notifications" ? "active" : ""}
+              type="button"
+              onClick={() => setProfilePanel((panel) => (panel === "notifications" ? null : "notifications"))}
+            >
               <Bell size={18} />
               <span>通知</span>
               {unreadCount > 0 && <strong>{unreadCount}</strong>}
             </button>
-            <button type="button">
+            <button
+              className={profilePanel === "preferences" ? "active" : ""}
+              type="button"
+              onClick={() => setProfilePanel((panel) => (panel === "preferences" ? null : "preferences"))}
+            >
               <SlidersHorizontal size={18} />
               <span>偏好</span>
             </button>
           </div>
 
-          <section className="preference-panel" aria-label="对话偏好">
-            <h3>他说话的方式</h3>
-            <div className="preference-grid">
-              {preferenceOptions.map((option) => (
-                <button
-                  className={preferences.includes(option.key) ? "preference-option active" : "preference-option"}
-                  key={option.key}
-                  type="button"
-                  onClick={() => togglePreference(option.key)}
-                >
-                  <span>{option.label}</span>
-                  <small>{option.note}</small>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section className="notification-panel" aria-label="通知记录">
-            <h3>通知</h3>
-            {notifications.length === 0 ? (
-              <p className="notification-empty">暂无通知，今日安排和智能管家会在这里提醒你。</p>
-            ) : (
-              <div className="notification-list">
-                {notifications.slice(0, 6).map((item) => (
+          {profilePanel === "preferences" && (
+            <section className="preference-panel" aria-label="对话偏好">
+              <h3>他说话的方式</h3>
+              <div className="preference-grid">
+                {preferenceOptions.map((option) => (
                   <button
-                    className={item.read ? "notification-item" : "notification-item unread"}
-                    key={item.id}
+                    className={preferences.includes(option.key) ? "preference-option active" : "preference-option"}
+                    key={option.key}
                     type="button"
-                    onClick={() => openNotification(item)}
+                    onClick={() => togglePreference(option.key)}
                   >
-                    <span>
-                      <strong>{item.title}</strong>
-                      <small>{item.text}</small>
-                    </span>
-                    <time>{item.time}</time>
+                    <span>{option.label}</span>
+                    <small>{option.note}</small>
                   </button>
                 ))}
               </div>
-            )}
-          </section>
+            </section>
+          )}
+
+          {profilePanel === "notifications" && (
+            <section className="notification-panel" aria-label="通知记录">
+              <h3>通知</h3>
+              {notifications.length === 0 ? (
+                <p className="notification-empty">暂无通知，今日安排和智能管家会在这里提醒你。</p>
+              ) : (
+                <div className="notification-list">
+                  {notifications.slice(0, 6).map((item) => (
+                    <button
+                      className={item.read ? "notification-item" : "notification-item unread"}
+                      key={item.id}
+                      type="button"
+                      onClick={() => openNotification(item)}
+                    >
+                      <span>
+                        <strong>{item.title}</strong>
+                        <small>{item.text}</small>
+                      </span>
+                      <time>{item.time}</time>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
 
           <form
             className="redeem-box"
@@ -828,6 +874,12 @@ export function App() {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+        {hugging && (
+          <div className="hug-layer" aria-live="polite">
+            <img src="/assets/chibi-hug.svg" alt={`${companionName} Q 版抱抱`} />
+            <span>抱到了。</span>
           </div>
         )}
       </section>
