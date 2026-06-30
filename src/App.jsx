@@ -112,11 +112,11 @@ const modelStates = {
 };
 
 const quickActions = [
-  { key: "voice", label: "想听你的声音", text: "想听你的声音", icon: Phone },
-  { key: "hug", label: "抱抱我", text: "抱抱我", icon: Heart },
-  { key: "hand", label: "牵牵手", text: "牵牵手", icon: Heart },
-  { key: "pat", label: "摸摸头", text: "摸摸头", icon: Smile },
-  { key: "stay", label: "陪我一会儿", text: "陪我一会儿", icon: Moon },
+  { key: "voice", label: "想听你的声音", text: "想听你的声音", type: "message", icon: Phone },
+  { key: "hug", label: "抱抱我", memory: "我抱了抱你", type: "action", icon: Heart },
+  { key: "hand", label: "牵牵手", memory: "我牵了牵你的手", type: "action", icon: Heart },
+  { key: "pat", label: "摸摸头", memory: "我摸了摸你的头", type: "action", icon: Smile },
+  { key: "stay", label: "陪我一会儿", memory: "我靠近你，安静地陪了你一会儿", type: "action", icon: Moon },
 ];
 
 function loadStoredValue(key, fallback) {
@@ -156,6 +156,18 @@ function inferModelTone(text, moodValue) {
   return "calm";
 }
 
+function formatTaskTime(date) {
+  return date.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", hour12: false });
+}
+
+function reminderLine(task) {
+  const title = task?.title || "安排";
+  if (/喝水|水/.test(title)) return `${companionName}提醒你，该喝点水了。`;
+  if (/睡|放松|休息|冥想/.test(title)) return `${companionName}提醒你，该让自己放松一下了。`;
+  if (/会议|复盘|项目|工作/.test(title)) return `${companionName}提醒你，${title}快开始了。`;
+  return `${companionName}提醒你，该${title.replace(/提醒$/, "")}了。`;
+}
+
 export function App() {
   const [mood, setMood] = useState(3);
   const [tasks, setTasks] = useState(initialTasks);
@@ -181,7 +193,9 @@ export function App() {
   const [notifiedTaskKeys, setNotifiedTaskKeys] = useState(() => loadStoredValue(storageKeys.notifiedTasks, []));
   const [modelTone, setModelTone] = useState(() => loadStoredValue(storageKeys.modelTone, "calm"));
   const [profilePanel, setProfilePanel] = useState(null);
-  const [hugging, setHugging] = useState(false);
+  const [actionEffect, setActionEffect] = useState(null);
+  const [activeReminder, setActiveReminder] = useState(null);
+  const [showConversation, setShowConversation] = useState(false);
   const [draft, setDraft] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [showTools, setShowTools] = useState(false);
@@ -225,6 +239,7 @@ export function App() {
       tasks.forEach((task) => {
         const key = `${today}-${task.id}-${task.time}`;
         if (!task.done && task.time === current && !notifiedTaskKeys.includes(key)) {
+          setActiveReminder(task);
           addNotification({
             title: "今日安排提醒",
             text: `${task.time} · ${task.title}`,
@@ -274,10 +289,40 @@ export function App() {
     );
   }
 
+  function deleteNotification(id) {
+    setNotifications((current) => current.filter((notification) => notification.id !== id));
+  }
+
+  function cancelNotificationAction(item) {
+    if (item.actionType === "scene" && pendingScene === item.sceneId) {
+      setPendingScene(null);
+    }
+    setNotifications((current) =>
+      current.map((notification) =>
+        notification.id === item.id
+          ? { ...notification, read: true, cancelable: false, title: "已取消操作", text: item.text.replace("需要你确认后才会执行", "已取消") }
+          : notification,
+      ),
+    );
+  }
+
   function togglePreference(key) {
+    const option = preferenceOptions.find((item) => item.key === key);
+    const enabled = !preferences.includes(key);
     setPreferences((current) =>
       current.includes(key) ? current.filter((item) => item !== key) : [...current, key],
     );
+    if (option) {
+      setMessages((current) => [
+        ...current,
+        {
+          from: "him",
+          text: enabled ? `我记住了。接下来我会${option.label}，但还是会好好听你说。` : `好，我会把「${option.label}」收一点，按你舒服的方式来。`,
+          time: nowLabel(),
+        },
+      ]);
+      setModelTone("warm");
+    }
   }
 
   function toggleTask(taskId) {
@@ -309,10 +354,32 @@ export function App() {
     setTasks((current) => current.filter((task) => task.id !== taskId));
   }
 
+  function dismissReminder() {
+    if (activeReminder) toggleTask(activeReminder.id);
+    setActiveReminder(null);
+  }
+
+  function snoozeReminder() {
+    if (!activeReminder) return;
+    const next = new Date(Date.now() + 10 * 60 * 1000);
+    setTasks((current) =>
+      current.map((task) => (task.id === activeReminder.id ? { ...task, time: formatTaskTime(next), done: false } : task)),
+    );
+    setActiveReminder(null);
+  }
+
   function requestScene(sceneId) {
     setModelTone("guard");
     if (sceneId === "away") {
       setPendingScene(sceneId);
+      addNotification({
+        title: "智能管家待确认",
+        text: "离家模式需要你确认后才会执行",
+        tab: "smart",
+        actionType: "scene",
+        sceneId,
+        cancelable: true,
+      });
       return;
     }
     setActiveScene(sceneId);
@@ -403,13 +470,14 @@ export function App() {
 
   async function handleQuickAction(action) {
     setShowTools(false);
-    if (action.key === "hug") {
-      addTimelineMemory(`${nowLabel()}，我抱了抱你`);
-      setHugging(false);
-      window.setTimeout(() => setHugging(true), 0);
-      window.setTimeout(() => setHugging(false), 2300);
+    if (action.type === "message") {
+      await sendMessage(action.text);
+      return;
     }
-    await sendMessage(action.text);
+    addTimelineMemory(`${nowLabel()}，${action.memory}`);
+    setModelTone("warm");
+    setActionEffect({ key: action.key, label: action.label, stamp: Date.now() });
+    window.setTimeout(() => setActionEffect(null), 2400);
   }
 
   return (
@@ -486,7 +554,7 @@ export function App() {
                   </div>
                 )}
               </div>
-              <button className="link-button" type="button">
+              <button className="link-button" type="button" onClick={() => setShowConversation(true)}>
                 查看全部对话
                 <ChevronRight size={17} />
               </button>
@@ -793,18 +861,29 @@ export function App() {
               ) : (
                 <div className="notification-list">
                   {notifications.slice(0, 6).map((item) => (
-                    <button
-                      className={item.read ? "notification-item" : "notification-item unread"}
-                      key={item.id}
-                      type="button"
-                      onClick={() => openNotification(item)}
-                    >
-                      <span>
-                        <strong>{item.title}</strong>
-                        <small>{item.text}</small>
-                      </span>
-                      <time>{item.time}</time>
-                    </button>
+                    <div className="notification-swipe" key={item.id}>
+                      <button
+                        className={item.read ? "notification-item" : "notification-item unread"}
+                        type="button"
+                        onClick={() => openNotification(item)}
+                      >
+                        <span>
+                          <strong>{item.title}</strong>
+                          <small>{item.text}</small>
+                        </span>
+                        <time>{item.time}</time>
+                      </button>
+                      <div className="notification-actions">
+                        <button type="button" onClick={() => deleteNotification(item.id)}>
+                          删除
+                        </button>
+                        {item.cancelable && (
+                          <button className="cancel" type="button" onClick={() => cancelNotificationAction(item)}>
+                            取消
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -876,10 +955,46 @@ export function App() {
             </div>
           </div>
         )}
-        {hugging && (
-          <div className="hug-layer" aria-live="polite">
-            <img src="/assets/chibi-hug.svg" alt={`${companionName} Q 版抱抱`} />
-            <span>抱到了。</span>
+        {showConversation && (
+          <div className="modal-backdrop" role="presentation">
+            <div className="conversation-modal" role="dialog" aria-modal="true" aria-label="全部对话">
+              <button className="modal-close" type="button" onClick={() => setShowConversation(false)} aria-label="关闭">
+                <X size={22} />
+              </button>
+              <h2>全部对话</h2>
+              <div className="conversation-scroll">
+                {messages.map((message, index) => (
+                  <div className={`message ${message.from}`} key={`${message.time}-${index}-full`}>
+                    <p>{message.text}</p>
+                    <span>{message.time}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        {activeReminder && (
+          <div className="alarm-backdrop" role="presentation">
+            <section className="alarm-card" role="dialog" aria-modal="true" aria-label="今日安排提醒">
+              <div className="alarm-figure">
+                <img src="/assets/chibi-hug.svg" alt={`${companionName} Q 版提醒`} />
+              </div>
+              <p>{reminderLine(activeReminder)}</p>
+              <div className="alarm-actions">
+                <button type="button" onClick={dismissReminder}>
+                  我知道了
+                </button>
+                <button type="button" onClick={snoozeReminder}>
+                  稍后再提醒
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+        {actionEffect && (
+          <div className={`hug-layer action-${actionEffect.key}`} aria-live="polite" key={actionEffect.stamp}>
+            <img src="/assets/chibi-hug.svg" alt={`${companionName} Q 版${actionEffect.label}`} />
+            <span>{actionEffect.label === "陪我一会儿" ? "他安静地靠近了你。" : "收到你的心意了。"}</span>
           </div>
         )}
       </section>

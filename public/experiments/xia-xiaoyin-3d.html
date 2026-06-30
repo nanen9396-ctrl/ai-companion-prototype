@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>夏萧因 3D 模型实验</title>
+    <style>
+      :root {
+        color: #f7f3ff;
+        background: #11101a;
+        font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 50% 12%, rgba(180, 150, 214, 0.28), transparent 34%),
+          linear-gradient(180deg, #171625 0%, #0f1018 100%);
+      }
+
+      #stage {
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .hud {
+        position: fixed;
+        left: 20px;
+        right: 20px;
+        bottom: 18px;
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        align-items: end;
+        pointer-events: none;
+      }
+
+      .hud h1 {
+        margin: 0 0 6px;
+        font-size: 20px;
+        letter-spacing: 0;
+      }
+
+      .hud p {
+        max-width: 42ch;
+        margin: 0;
+        color: rgba(247, 243, 255, 0.72);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .badge {
+        flex: 0 0 auto;
+        padding: 9px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        color: rgba(247, 243, 255, 0.72);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(16px);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage" aria-label="夏萧因 3D 实验模型"></div>
+    <div class="hud">
+      <div>
+        <h1>夏萧因 3D 实验模型</h1>
+        <p>Three.js 低多边形原型：白发、贵族深色礼服、披风与冷调灯光。拖动屏幕可轻微旋转视角。</p>
+      </div>
+      <div class="badge">prototype only</div>
+    </div>
+    <script type="module">
+      import * as THREE from "/vendor/three.module.js";
+
+      const mount = document.getElementById("stage");
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0x11101a, 7, 18);
+
+      const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 1.6, 7.2);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      mount.appendChild(renderer.domElement);
+
+      const softWhite = new THREE.MeshStandardMaterial({ color: 0xf2f4ff, roughness: 0.55, metalness: 0.08 });
+      const skin = new THREE.MeshStandardMaterial({ color: 0xf1d8cf, roughness: 0.62 });
+      const suit = new THREE.MeshStandardMaterial({ color: 0x252033, roughness: 0.5, metalness: 0.18 });
+      const violet = new THREE.MeshStandardMaterial({ color: 0x725a9f, roughness: 0.48, metalness: 0.25 });
+      const gold = new THREE.MeshStandardMaterial({ color: 0xd7a24f, roughness: 0.38, metalness: 0.6 });
+      const black = new THREE.MeshStandardMaterial({ color: 0x151521, roughness: 0.44, metalness: 0.2 });
+
+      const figure = new THREE.Group();
+      scene.add(figure);
+
+      function mesh(geometry, material, position, scale = [1, 1, 1], rotation = [0, 0, 0]) {
+        const item = new THREE.Mesh(geometry, material);
+        item.position.set(...position);
+        item.scale.set(...scale);
+        item.rotation.set(...rotation);
+        figure.add(item);
+        return item;
+      }
+
+      mesh(new THREE.CapsuleGeometry(0.72, 1.45, 8, 22), suit, [0, -0.65, 0], [0.92, 1, 0.56]);
+      mesh(new THREE.ConeGeometry(1.45, 2.4, 5), black, [0, -1.05, 0.34], [1, 1, 0.28], [0.14, 0, Math.PI]);
+      mesh(new THREE.SphereGeometry(0.55, 32, 24), skin, [0, 0.72, 0]);
+      mesh(new THREE.SphereGeometry(0.62, 24, 16), softWhite, [0, 0.98, -0.02], [1.08, 0.62, 1.02]);
+      mesh(new THREE.ConeGeometry(0.16, 0.78, 8), softWhite, [-0.48, 0.66, 0.05], [1, 1, 0.7], [0.4, 0, 0.38]);
+      mesh(new THREE.ConeGeometry(0.16, 0.72, 8), softWhite, [0.42, 0.67, 0.05], [1, 1, 0.7], [0.4, 0, -0.34]);
+      mesh(new THREE.BoxGeometry(0.12, 0.038, 0.03), black, [-0.18, 0.72, 0.52]);
+      mesh(new THREE.BoxGeometry(0.12, 0.038, 0.03), black, [0.18, 0.72, 0.52]);
+      mesh(new THREE.TorusGeometry(0.16, 0.012, 8, 24), gold, [0, 0.51, 0.53], [1, 0.28, 1]);
+      mesh(new THREE.CapsuleGeometry(0.14, 1.06, 8, 16), suit, [-0.72, -0.48, 0.05], [0.9, 1, 0.9], [0.2, 0, 0.36]);
+      mesh(new THREE.CapsuleGeometry(0.14, 1.06, 8, 16), suit, [0.72, -0.48, 0.05], [0.9, 1, 0.9], [0.2, 0, -0.36]);
+      mesh(new THREE.BoxGeometry(1.1, 0.08, 0.06), gold, [0, 0.06, 0.5]);
+      mesh(new THREE.SphereGeometry(0.12, 16, 12), violet, [0, -0.05, 0.56]);
+
+      const floor = new THREE.Mesh(
+        new THREE.CircleGeometry(3.4, 64),
+        new THREE.MeshStandardMaterial({ color: 0x1b1728, roughness: 0.8, metalness: 0.1 }),
+      );
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -2.15;
+      scene.add(floor);
+
+      scene.add(new THREE.HemisphereLight(0xffffff, 0x251d35, 1.8));
+      const key = new THREE.DirectionalLight(0xffffff, 2.6);
+      key.position.set(3, 5, 4);
+      scene.add(key);
+      const rim = new THREE.PointLight(0x9d82ff, 18, 7);
+      rim.position.set(-2.4, 1.5, 2.8);
+      scene.add(rim);
+
+      let targetY = 0;
+      let dragStart = null;
+      window.addEventListener("pointerdown", (event) => {
+        dragStart = event.clientX;
+      });
+      window.addEventListener("pointermove", (event) => {
+        if (dragStart === null) return;
+        targetY += (event.clientX - dragStart) * 0.006;
+        dragStart = event.clientX;
+      });
+      window.addEventListener("pointerup", () => {
+        dragStart = null;
+      });
+
+      function resize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+      window.addEventListener("resize", resize);
+
+      function animate(time) {
+        figure.rotation.y += (targetY - figure.rotation.y) * 0.08;
+        figure.position.y = Math.sin(time * 0.0012) * 0.035;
+        renderer.render(scene, camera);
+        requestAnimationFrame(animate);
+      }
+      animate(0);
+    </script>
+  </body>
+</html>
