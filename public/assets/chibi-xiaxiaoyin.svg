@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 1040" role="img" aria-label="Chibi noble companion">
+  <defs>
+    <linearGradient id="hair" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#fffefa"/>
+      <stop offset=".52" stop-color="#f1edf1"/>
+      <stop offset="1" stop-color="#cfd5e3"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#fff0df"/>
+      <stop offset="1" stop-color="#f5cfc1"/>
+    </linearGradient>
+    <linearGradient id="coat" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#252949"/>
+      <stop offset=".58" stop-color="#111936"/>
+      <stop offset="1" stop-color="#313a5e"/>
+    </linearGradient>
+    <linearGradient id="goldEye" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffe8a4"/>
+      <stop offset=".48" stop-color="#c7832a"/>
+      <stop offset="1" stop-color="#6a3a1b"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#2f2440" flood-opacity=".24"/>
+    </filter>
+  </defs>
+  <g filter="url(#softShadow)">
+    <ellipse cx="382" cy="985" rx="122" ry="30" fill="#4a385f" opacity=".18"/>
+    <path d="M205 448c-66 19-131 61-172 128-17 29-16 57 7 73 25 18 57 3 86-27l69-71 27-79Z" fill="url(#skin)"/>
+    <path d="M555 448c66 19 131 61 172 128 17 29 16 57-7 73-25 18-57 3-86-27l-69-71-27-79Z" fill="url(#skin)"/>
+    <path d="M166 558c-31 14-66 47-93 79-16 20-16 45 4 54 18 9 38-1 58-21-2 25 8 42 25 43 17 0 28-13 38-35 6 22 21 35 38 29 15-5 21-20 19-40 19 11 37 12 49-1 13-15 5-36-15-54l-77-69Z" fill="url(#skin)"/>
+    <path d="M594 558c31 14 66 47 93 79 16 20 16 45-4 54-18 9-38-1-58-21 2 25-8 42-25 43-17 0-28-13-38-35-6 22-21 35-38 29-15-5-21-20-19-40-19 11-37 12-49-1-13-15-5-36 15-54l77-69Z" fill="url(#skin)"/>
+    <path d="M238 411c-78 44-119 151-102 286 10 84 52 164 101 221 28-64 45-151 46-257l-8-231Z" fill="#11162f"/>
+    <path d="M522 411c78 44 119 151 102 286-10 84-52 164-101 221-28-64-45-151-46-257l8-231Z" fill="#11162f"/>
+    <path d="M229 410c-42 81-43 300-3 462 39-28 80-79 111-147l-17-274Z" fill="#252947" opacity=".9"/>
+    <path d="M531 410c42 81 43 300 3 462-39-28-80-79-111-147l17-274Z" fill="#252947" opacity=".9"/>
+    <path d="M286 385h188c45 41 66 108 68 202 2 104-37 203-86 252H303c-49-49-88-148-86-252 2-94 24-161 69-202Z" fill="url(#coat)"/>
+    <path d="M308 433c36 37 72 55 72 55s36-18 72-55l20 392H288Z" fill="#f7f4f2"/>
+    <path d="M292 451c42 37 88 56 88 56s46-19 88-56" fill="none" stroke="#d9b46c" stroke-width="7" stroke-linecap="round"/>
+    <path d="M310 432c-34 54-37 157-19 249 21-44 49-89 83-132-29-31-50-71-64-117Z" fill="#151b38"/>
+    <path d="M450 432c34 54 37 157 19 249-21-44-49-89-83-132 29-31 50-71 64-117Z" fill="#151b38"/>
+    <path d="M300 401c-28 26-78 49-114 73 20 54 54 93 101 120 9-71 16-137 13-193Z" fill="#222748"/>
+    <path d="M460 401c28 26 78 49 114 73-20 54-54 93-101 120-9-71-16-137-13-193Z" fill="#222748"/>
+    <path d="M279 573c32 31 69 48 101 48s69-17 101-48" fill="none" stroke="#e6d5b1" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+    <path d="M285 650c37 24 71 36 95 36s58-12 95-36" fill="none" stroke="#e6d5b1" stroke-width="5" stroke-linecap="round" opacity=".75"/>
+    <circle cx="380" cy="533" r="24" fill="#e7cf93"/>
+    <circle cx="380" cy="533" r="14" fill="#5965a0"/>
+    <path d="M342 849c-6 53-5 108 7 157h-62c-29-70-20-131 15-183Z" fill="#171d3c"/>
+    <path d="M418 849c6 53 5 108-7 157h62c29-70 20-131-15-183Z" fill="#171d3c"/>
+    <path d="M284 998h83c10 27-4 42-43 42-47 0-59-12-40-42Z" fill="#111833"/>
+    <path d="M476 998h-83c-10 27 4 42 43 42 47 0 59-12 40-42Z" fill="#111833"/>
+    <path d="M184 316c-44-72-14-181 78-242 83-55 201-53 282 2 86 58 114 163 71 235 38 0 67 34 51 70-19 43-71 39-103 13-28 78-101 128-183 128s-155-50-183-128c-32 26-84 30-103-13-16-36 13-70 90-65Z" fill="url(#skin)"/>
+    <path d="M128 293c5-87 73-188 178-226 119-43 251 0 317 98 31 46 42 95 33 138-35-57-86-90-151-99 24 28 38 66 41 113-62-63-132-86-209-69-64 14-133 8-209 45Z" fill="url(#hair)"/>
+    <path d="M217 193c-41 37-65 89-76 156 49-53 116-73 187-82-54-1-87-22-111-74Z" fill="url(#hair)"/>
+    <path d="M314 69c-85 59-93 137-72 226 33-76 80-133 141-169-37 73-35 133-2 180 37-77 91-124 163-142-46-62-132-101-230-95Z" fill="url(#hair)"/>
+    <path d="M504 162c54 20 91 70 111 144-48-38-100-60-156-63 34-17 47-43 45-81Z" fill="url(#hair)"/>
+    <path d="M198 313c-47 11-82 42-107 86 62-5 110-31 146-77Z" fill="url(#hair)"/>
+    <path d="M562 313c47 11 82 42 107 86-62-5-110-31-146-77Z" fill="url(#hair)"/>
+    <path d="M276 327c-33-31-77-25-101 0" fill="none" stroke="#8a5b4e" stroke-width="10" stroke-linecap="round"/>
+    <path d="M484 327c33-31 77-25 101 0" fill="none" stroke="#8a5b4e" stroke-width="10" stroke-linecap="round"/>
+    <ellipse cx="242" cy="365" rx="44" ry="34" fill="#fff7ed"/>
+    <ellipse cx="518" cy="365" rx="44" ry="34" fill="#fff7ed"/>
+    <ellipse cx="247" cy="366" rx="27" ry="30" fill="url(#goldEye)"/>
+    <ellipse cx="513" cy="366" rx="27" ry="30" fill="url(#goldEye)"/>
+    <circle cx="237" cy="354" r="8" fill="#fff"/>
+    <circle cx="503" cy="354" r="8" fill="#fff"/>
+    <path d="M337 427c29 24 58 24 86 0" fill="none" stroke="#bc645b" stroke-width="12" stroke-linecap="round"/>
+    <path d="M184 411c26 3 57 2 83-9" stroke="#efa8a2" stroke-width="12" stroke-linecap="round" opacity=".22"/>
+    <path d="M493 402c26 11 57 12 83 9" stroke="#efa8a2" stroke-width="12" stroke-linecap="round" opacity=".22"/>
+    <path d="M260 116c-73-48-87-89-72-116 45 42 82 71 139 87Z" fill="url(#hair)"/>
+    <path d="M491 112c77-43 95-84 82-112-48 39-88 65-146 76Z" fill="url(#hair)"/>
+    <g fill="none" stroke="#efe1c0" stroke-linecap="round" opacity=".9">
+      <path d="M241 614c21 47 15 105-17 174" stroke-width="5"/>
+      <path d="M519 614c-21 47-15 105 17 174" stroke-width="5"/>
+      <path d="M245 770c-21 19-28 42-18 68" stroke-width="4"/>
+      <path d="M515 770c21 19 28 42 18 68" stroke-width="4"/>
+      <path d="M284 446c-26 36-38 77-36 123" stroke-width="4"/>
+      <path d="M476 446c26 36 38 77 36 123" stroke-width="4"/>
+    </g>
+    <g fill="#f4e8c6">
+      <circle cx="285" cy="505" r="7"/>
+      <circle cx="475" cy="505" r="7"/>
+      <circle cx="309" cy="558" r="6"/>
+      <circle cx="451" cy="558" r="6"/>
+      <circle cx="335" cy="607" r="5"/>
+      <circle cx="425" cy="607" r="5"/>
+    </g>
+  </g>
+</svg>

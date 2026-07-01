@@ -70,8 +70,12 @@ const tabs = [
 ];
 
 const emojiOptions = ["🥺", "😊", "❤️", "🌙", "✨", "抱抱", "晚安", "想你"];
-const hourOptions = Array.from({ length: 24 }, (_, index) => String(index).padStart(2, "0"));
-const minuteOptions = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, "0"));
+const periodOptions = [
+  { label: "上午", value: "AM" },
+  { label: "下午", value: "PM" },
+];
+const hourOptions = Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, "0"));
+const minuteOptions = Array.from({ length: 60 }, (_, index) => String(index).padStart(2, "0"));
 const storageKeys = {
   messages: "ai-companion.messages",
   memories: "ai-companion.memories",
@@ -162,6 +166,20 @@ function formatTaskTime(date) {
   return date.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
+function splitTaskTime(time) {
+  const [rawHour = "20", minute = "00"] = time.split(":");
+  const hour24 = Number(rawHour);
+  const period = hour24 >= 12 ? "PM" : "AM";
+  const hour12 = hour24 % 12 || 12;
+  return { period, hour: String(hour12).padStart(2, "0"), minute };
+}
+
+function composeTaskTime({ period, hour, minute }) {
+  const hourNumber = Number(hour);
+  const hour24 = period === "PM" ? (hourNumber % 12) + 12 : hourNumber % 12;
+  return `${String(hour24).padStart(2, "0")}:${minute}`;
+}
+
 function reminderLine(task) {
   const title = task?.title || "安排";
   if (/喝水|水/.test(title)) return `${companionName}提醒你，该喝点水了。`;
@@ -174,26 +192,7 @@ function ChibiFigure({ mood = "hug", label = "Q 版动作" }) {
   return (
     <div className={`chibi-figure chibi-${mood}`} role="img" aria-label={`${companionName} ${label}`}>
       <span className="chibi-shadow" />
-      <span className="chibi-aura" />
-      <span className="chibi-cape" />
-      <span className="chibi-body" />
-      <span className="chibi-coat" />
-      <span className="chibi-head">
-        <span className="chibi-hair" />
-        <span className="chibi-bang one" />
-        <span className="chibi-bang two" />
-        <span className="chibi-bang three" />
-        <span className="chibi-ear left" />
-        <span className="chibi-ear right" />
-        <span className="chibi-eye left" />
-        <span className="chibi-eye right" />
-        <span className="chibi-cheek left" />
-        <span className="chibi-cheek right" />
-        <span className="chibi-mouth" />
-      </span>
-      <span className="chibi-crown" />
-      <span className="chibi-arm left" />
-      <span className="chibi-arm right" />
+      <img src="/assets/chibi-xiaxiaoyin.svg" alt="" aria-hidden="true" />
       <span className="chibi-spark one" />
       <span className="chibi-spark two" />
     </div>
@@ -238,6 +237,7 @@ export function App() {
   const unreadCount = notifications.filter((item) => !item.read).length;
   const pageClass = `tab-${activeTab}`;
   const modelState = modelStates[modelTone] || modelStates.calm;
+  const taskTime = splitTaskTime(newTaskTime);
 
   useEffect(() => {
     localStorage.setItem(storageKeys.messages, JSON.stringify(messages.slice(-80)));
@@ -386,8 +386,7 @@ export function App() {
   }
 
   function updateTaskTime(part, value) {
-    const [hour = "20", minute = "00"] = newTaskTime.split(":");
-    setNewTaskTime(`${part === "hour" ? value : hour}:${part === "minute" ? value : minute}`);
+    setNewTaskTime(composeTaskTime({ ...splitTaskTime(newTaskTime), [part]: value }));
   }
 
   function deleteTask(taskId) {
@@ -692,25 +691,31 @@ export function App() {
               }}
             >
               <div className="time-picker" aria-label="安排时间">
-                <span>提醒时间</span>
+                <div className="time-picker-top">
+                  <button type="button" aria-label="关闭时间选择">
+                    ×
+                  </button>
+                  <strong>编辑闹钟</strong>
+                  <button type="submit" aria-label="保存安排时间">
+                    ✓
+                  </button>
+                </div>
                 <div className="time-wheels">
-                  <select
-                    value={newTaskTime.slice(0, 2)}
-                    onChange={(event) => updateTaskTime("hour", event.target.value)}
-                    aria-label="小时"
-                  >
+                  <select value={taskTime.period} onChange={(event) => updateTaskTime("period", event.target.value)} aria-label="上午或下午" size={2}>
+                    {periodOptions.map((period) => (
+                      <option value={period.value} key={period.value}>
+                        {period.label}
+                      </option>
+                    ))}
+                  </select>
+                  <select value={taskTime.hour} onChange={(event) => updateTaskTime("hour", event.target.value)} aria-label="小时" size={5}>
                     {hourOptions.map((hour) => (
                       <option value={hour} key={hour}>
                         {hour}
                       </option>
                     ))}
                   </select>
-                  <b>:</b>
-                  <select
-                    value={newTaskTime.slice(3, 5)}
-                    onChange={(event) => updateTaskTime("minute", event.target.value)}
-                    aria-label="分钟"
-                  >
+                  <select value={taskTime.minute} onChange={(event) => updateTaskTime("minute", event.target.value)} aria-label="分钟" size={5}>
                     {minuteOptions.map((minute) => (
                       <option value={minute} key={minute}>
                         {minute}

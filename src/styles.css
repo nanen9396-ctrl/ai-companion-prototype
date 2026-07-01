@@ -643,6 +643,10 @@ button {
   padding: 0 0 0 11px;
   margin: 0;
   border-left: 2px solid rgba(184, 111, 142, 0.22);
+  max-height: 238px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .memory li {
@@ -682,6 +686,11 @@ button {
 .task-list {
   display: flex;
   flex-direction: column;
+  max-height: 236px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 3px;
+  scrollbar-width: thin;
 }
 
 .task-row {
@@ -795,59 +804,116 @@ button {
 
 .time-picker {
   grid-column: 1 / -1;
-  min-height: 72px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
-  align-items: center;
-  padding: 10px 12px 10px 16px;
-  border-radius: 20px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 245, 247, 0.92)),
-    #f5f5f7;
-  border: 1px solid rgba(29, 29, 31, 0.08);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 14px 30px rgba(52, 40, 66, 0.08);
+  padding: 12px 16px 16px;
+  border-radius: 24px;
+  background: #f2f3f5;
+  border: 1px solid rgba(29, 29, 31, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84);
 }
 
-.time-picker > span {
-  color: #6e6474;
-  font-size: 13px;
-  font-weight: 650;
+.time-picker-top {
+  height: 42px;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  margin-bottom: 8px;
+  color: #1d1d1f;
+}
+
+.time-picker-top strong {
+  font-size: 19px;
+  font-weight: 720;
+}
+
+.time-picker-top button {
+  width: 40px;
+  height: 40px;
+  display: inline-grid;
+  place-items: center;
+  color: #1d1d1f;
+  background: transparent;
+  font-size: 34px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.time-picker-top button:last-child {
+  justify-self: end;
+  color: #0a84ff;
+  font-size: 30px;
+  font-weight: 520;
 }
 
 .time-wheels {
-  display: inline-flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr;
   align-items: center;
-  gap: 6px;
-  padding: 5px;
-  border-radius: 18px;
-  background: rgba(230, 227, 236, 0.78);
-  box-shadow: inset 0 1px 3px rgba(52, 40, 66, 0.1);
+  gap: 14px;
+  min-height: 198px;
+  padding: 8px 18px;
+  overflow: hidden;
+}
+
+.time-wheels::before,
+.time-wheels::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(60, 60, 67, 0.22);
+  pointer-events: none;
+}
+
+.time-wheels::before {
+  top: 80px;
+}
+
+.time-wheels::after {
+  top: 128px;
 }
 
 .time-wheels select {
-  width: 58px;
-  height: 40px;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 186px;
   border: 0;
-  border-radius: 14px;
+  border-radius: 0;
   color: #1d1d1f;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 5px 14px rgba(52, 40, 66, 0.08);
-  font-size: 18px;
-  font-weight: 750;
+  background: transparent;
+  font-size: 28px;
+  font-weight: 520;
   text-align: center;
   letter-spacing: 0;
   outline: 0;
   appearance: none;
   -webkit-appearance: none;
   color-scheme: light;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.time-wheels select::-webkit-scrollbar {
+  display: none;
+}
+
+.time-wheels option {
+  min-height: 42px;
+  padding: 8px 0;
+  color: rgba(29, 29, 31, 0.58);
+  text-align: center;
+}
+
+.time-wheels option:checked {
+  color: #007aff;
+  background: transparent;
+  font-weight: 720;
 }
 
 .time-wheels b {
-  color: rgba(29, 29, 31, 0.54);
-  font-size: 18px;
+  display: none;
 }
 
 .schedule-add input:nth-of-type(2) {
@@ -1446,7 +1512,7 @@ button {
 .alarm-card {
   width: min(100%, 352px);
   display: grid;
-  grid-template-rows: 150px auto 54px;
+  grid-template-rows: 184px auto 54px;
   overflow: hidden;
   border-radius: 30px;
   color: #1d1d1f;
@@ -1522,14 +1588,24 @@ button {
 }
 
 .alarm-figure .chibi-figure {
-  width: 148px;
-  height: 166px;
+  width: 156px;
+  height: 176px;
   animation: chibi-remind 1.5s ease-in-out infinite;
 }
 
 .chibi-figure span {
   position: absolute;
   display: block;
+}
+
+.chibi-figure img {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .chibi-shadow {
