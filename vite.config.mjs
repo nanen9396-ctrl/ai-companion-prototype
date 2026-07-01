@@ -64,7 +64,6 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input: {
           main: resolve(process.cwd(), "index.html"),
-          experiment3d: resolve(process.cwd(), "experiments/xia-xiaoyin-3d.html"),
         },
       },
     },

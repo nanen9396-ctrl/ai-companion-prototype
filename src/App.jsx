@@ -70,6 +70,8 @@ const tabs = [
 ];
 
 const emojiOptions = ["🥺", "😊", "❤️", "🌙", "✨", "抱抱", "晚安", "想你"];
+const hourOptions = Array.from({ length: 24 }, (_, index) => String(index).padStart(2, "0"));
+const minuteOptions = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, "0"));
 const storageKeys = {
   messages: "ai-companion.messages",
   memories: "ai-companion.memories",
@@ -172,14 +174,24 @@ function ChibiFigure({ mood = "hug", label = "Q 版动作" }) {
   return (
     <div className={`chibi-figure chibi-${mood}`} role="img" aria-label={`${companionName} ${label}`}>
       <span className="chibi-shadow" />
+      <span className="chibi-aura" />
       <span className="chibi-cape" />
       <span className="chibi-body" />
+      <span className="chibi-coat" />
       <span className="chibi-head">
         <span className="chibi-hair" />
+        <span className="chibi-bang one" />
+        <span className="chibi-bang two" />
+        <span className="chibi-bang three" />
+        <span className="chibi-ear left" />
+        <span className="chibi-ear right" />
         <span className="chibi-eye left" />
         <span className="chibi-eye right" />
+        <span className="chibi-cheek left" />
+        <span className="chibi-cheek right" />
         <span className="chibi-mouth" />
       </span>
+      <span className="chibi-crown" />
       <span className="chibi-arm left" />
       <span className="chibi-arm right" />
       <span className="chibi-spark one" />
@@ -371,6 +383,11 @@ export function App() {
     ]);
     setNewTaskTitle("");
     setNewTaskNote("");
+  }
+
+  function updateTaskTime(part, value) {
+    const [hour = "20", minute = "00"] = newTaskTime.split(":");
+    setNewTaskTime(`${part === "hour" ? value : hour}:${part === "minute" ? value : minute}`);
   }
 
   function deleteTask(taskId) {
@@ -674,13 +691,34 @@ export function App() {
                 addTask();
               }}
             >
-              <input
-                className="time-input"
-                type="time"
-                value={newTaskTime}
-                onChange={(event) => setNewTaskTime(event.target.value)}
-                aria-label="安排时间"
-              />
+              <div className="time-picker" aria-label="安排时间">
+                <span>提醒时间</span>
+                <div className="time-wheels">
+                  <select
+                    value={newTaskTime.slice(0, 2)}
+                    onChange={(event) => updateTaskTime("hour", event.target.value)}
+                    aria-label="小时"
+                  >
+                    {hourOptions.map((hour) => (
+                      <option value={hour} key={hour}>
+                        {hour}
+                      </option>
+                    ))}
+                  </select>
+                  <b>:</b>
+                  <select
+                    value={newTaskTime.slice(3, 5)}
+                    onChange={(event) => updateTaskTime("minute", event.target.value)}
+                    aria-label="分钟"
+                  >
+                    {minuteOptions.map((minute) => (
+                      <option value={minute} key={minute}>
+                        {minute}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
               <input
                 value={newTaskTitle}
                 onChange={(event) => setNewTaskTitle(event.target.value)}
@@ -1028,7 +1066,7 @@ export function App() {
         {actionEffect && (
           <div className={`hug-layer action-${actionEffect.key}`} aria-live="polite" key={actionEffect.stamp}>
             <ChibiFigure mood={actionEffect.key} label={`Q 版${actionEffect.label}`} />
-            <span>{actionEffect.label === "陪我一会儿" ? "他安静地靠近了你。" : "收到你的心意了。"}</span>
+            <span className="action-caption">{actionEffect.label === "陪我一会儿" ? "他安静地靠近了你。" : "收到你的心意了。"}</span>
           </div>
         )}
       </section>
