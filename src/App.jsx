@@ -168,6 +168,26 @@ function reminderLine(task) {
   return `${companionName}提醒你，该${title.replace(/提醒$/, "")}了。`;
 }
 
+function ChibiFigure({ mood = "hug", label = "Q 版动作" }) {
+  return (
+    <div className={`chibi-figure chibi-${mood}`} role="img" aria-label={`${companionName} ${label}`}>
+      <span className="chibi-shadow" />
+      <span className="chibi-cape" />
+      <span className="chibi-body" />
+      <span className="chibi-head">
+        <span className="chibi-hair" />
+        <span className="chibi-eye left" />
+        <span className="chibi-eye right" />
+        <span className="chibi-mouth" />
+      </span>
+      <span className="chibi-arm left" />
+      <span className="chibi-arm right" />
+      <span className="chibi-spark one" />
+      <span className="chibi-spark two" />
+    </div>
+  );
+}
+
 export function App() {
   const [mood, setMood] = useState(3);
   const [tasks, setTasks] = useState(initialTasks);
@@ -294,13 +314,16 @@ export function App() {
   }
 
   function cancelNotificationAction(item) {
-    if (item.actionType === "scene" && pendingScene === item.sceneId) {
+    if (item.actionType === "scene") {
+      setActiveScene(item.previousScene || "home");
+    }
+    if (item.actionType === "pendingScene" && pendingScene === item.sceneId) {
       setPendingScene(null);
     }
     setNotifications((current) =>
       current.map((notification) =>
         notification.id === item.id
-          ? { ...notification, read: true, cancelable: false, title: "已取消操作", text: item.text.replace("需要你确认后才会执行", "已取消") }
+          ? { ...notification, read: true, cancelable: false, title: "已取消操作", text: "已撤回刚刚的智能管家操作" }
           : notification,
       ),
     );
@@ -376,18 +399,23 @@ export function App() {
         title: "智能管家待确认",
         text: "离家模式需要你确认后才会执行",
         tab: "smart",
-        actionType: "scene",
+        actionType: "pendingScene",
         sceneId,
-        cancelable: true,
+        cancelable: false,
       });
       return;
     }
+    const previousScene = activeScene;
     setActiveScene(sceneId);
     const scene = scenes.find((item) => item.id === sceneId);
     addNotification({
-      title: "智能管家已调整",
+      title: "智能管家已执行",
       text: scene ? `已切换到${scene.label}` : "场景已执行",
       tab: "smart",
+      actionType: "scene",
+      sceneId,
+      previousScene,
+      cancelable: true,
     });
   }
 
@@ -395,12 +423,17 @@ export function App() {
     if (pendingScene) {
       setModelTone("guard");
       const scene = scenes.find((item) => item.id === pendingScene);
+      const previousScene = activeScene;
       setActiveScene(pendingScene);
       setPendingScene(null);
       addNotification({
         title: "智能管家已执行",
         text: scene ? `已确认并开启${scene.label}` : "已确认高风险场景",
         tab: "smart",
+        actionType: "scene",
+        sceneId: pendingScene,
+        previousScene,
+        cancelable: true,
       });
     }
   }
@@ -642,6 +675,7 @@ export function App() {
               }}
             >
               <input
+                className="time-input"
                 type="time"
                 value={newTaskTime}
                 onChange={(event) => setNewTaskTime(event.target.value)}
@@ -977,7 +1011,7 @@ export function App() {
           <div className="alarm-backdrop" role="presentation">
             <section className="alarm-card" role="dialog" aria-modal="true" aria-label="今日安排提醒">
               <div className="alarm-figure">
-                <img src="/assets/chibi-hug.svg" alt={`${companionName} Q 版提醒`} />
+                <ChibiFigure mood="remind" label="Q 版提醒" />
               </div>
               <p>{reminderLine(activeReminder)}</p>
               <div className="alarm-actions">
@@ -993,7 +1027,7 @@ export function App() {
         )}
         {actionEffect && (
           <div className={`hug-layer action-${actionEffect.key}`} aria-live="polite" key={actionEffect.stamp}>
-            <img src="/assets/chibi-hug.svg" alt={`${companionName} Q 版${actionEffect.label}`} />
+            <ChibiFigure mood={actionEffect.key} label={`Q 版${actionEffect.label}`} />
             <span>{actionEffect.label === "陪我一会儿" ? "他安静地靠近了你。" : "收到你的心意了。"}</span>
           </div>
         )}

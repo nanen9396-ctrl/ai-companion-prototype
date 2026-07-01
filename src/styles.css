@@ -788,6 +788,21 @@ button {
   outline: 0;
 }
 
+.schedule-add .time-input {
+  color: #1d1d1f;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 245, 247, 0.92)),
+    #f5f5f7;
+  border-color: rgba(29, 29, 31, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 20px rgba(52, 40, 66, 0.08);
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0;
+  color-scheme: light;
+}
+
 .schedule-add input:nth-of-type(3) {
   grid-column: 1 / 2;
 }
@@ -1400,12 +1415,6 @@ button {
     #fafafc;
 }
 
-.alarm-figure img {
-  width: 138px;
-  animation: chibi-remind 1.5s ease-in-out infinite;
-  transform-origin: center bottom;
-}
-
 .alarm-card p {
   margin: 0;
   padding: 20px 24px 18px;
@@ -1448,12 +1457,170 @@ button {
   backdrop-filter: blur(3px);
 }
 
-.hug-layer img {
-  display: block;
-  width: min(78vw, 292px);
-  height: auto;
-  animation: chibi-hug 2.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+.chibi-figure {
+  position: relative;
+  width: 180px;
+  height: 202px;
+  isolation: isolate;
   transform-origin: center bottom;
+}
+
+.hug-layer .chibi-figure {
+  width: min(72vw, 280px);
+  height: min(80vw, 314px);
+  animation: chibi-hug 2.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.alarm-figure .chibi-figure {
+  width: 138px;
+  height: 154px;
+  animation: chibi-remind 1.5s ease-in-out infinite;
+}
+
+.chibi-figure span {
+  position: absolute;
+  display: block;
+}
+
+.chibi-shadow {
+  left: 17%;
+  right: 17%;
+  bottom: 1%;
+  height: 9%;
+  border-radius: 999px;
+  background: rgba(83, 64, 99, 0.2);
+  filter: blur(4px);
+}
+
+.chibi-cape {
+  left: 20%;
+  right: 20%;
+  bottom: 10%;
+  height: 48%;
+  border-radius: 42% 42% 30% 30%;
+  background: linear-gradient(180deg, #2b2942, #151521);
+  transform: skewX(-3deg);
+}
+
+.chibi-body {
+  left: 29%;
+  right: 29%;
+  bottom: 12%;
+  height: 45%;
+  border-radius: 44% 44% 28% 28%;
+  background:
+    linear-gradient(90deg, transparent 45%, rgba(215, 162, 79, 0.95) 46% 54%, transparent 55%),
+    linear-gradient(180deg, #5e4b82, #2c2944);
+  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.08);
+}
+
+.chibi-head {
+  left: 22%;
+  right: 22%;
+  top: 13%;
+  height: 48%;
+  border-radius: 48% 48% 44% 44%;
+  background: #f5eee9;
+  box-shadow: 0 12px 24px rgba(73, 55, 82, 0.16);
+  z-index: 2;
+}
+
+.chibi-hair {
+  left: -5%;
+  right: -5%;
+  top: -12%;
+  height: 47%;
+  border-radius: 58% 58% 36% 36%;
+  background:
+    radial-gradient(circle at 28% 28%, #ffffff 0 18%, transparent 19%),
+    linear-gradient(135deg, #ffffff, #dfe5f3 72%);
+}
+
+.chibi-hair::before,
+.chibi-hair::after {
+  content: "";
+  position: absolute;
+  top: 58%;
+  width: 20%;
+  height: 56%;
+  border-radius: 999px;
+  background: #eef2fb;
+}
+
+.chibi-hair::before {
+  left: 7%;
+  transform: rotate(22deg);
+}
+
+.chibi-hair::after {
+  right: 9%;
+  transform: rotate(-26deg);
+}
+
+.chibi-eye {
+  top: 54%;
+  width: 9%;
+  height: 5%;
+  border-radius: 999px;
+  background: #806078;
+}
+
+.chibi-eye.left {
+  left: 34%;
+}
+
+.chibi-eye.right {
+  right: 34%;
+}
+
+.chibi-mouth {
+  left: 45%;
+  top: 70%;
+  width: 10%;
+  height: 4%;
+  border-radius: 999px;
+  background: #c07a93;
+}
+
+.chibi-arm {
+  top: 56%;
+  width: 32%;
+  height: 13%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #efe8ff, #8a6fa8);
+  z-index: 3;
+  transform-origin: center bottom;
+}
+
+.chibi-arm.left {
+  left: 10%;
+  transform: rotate(-24deg);
+}
+
+.chibi-arm.right {
+  right: 10%;
+  transform: rotate(24deg);
+}
+
+.chibi-spark {
+  width: 9%;
+  height: 9%;
+  transform: rotate(45deg);
+  background: #fff0ce;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  z-index: 4;
+}
+
+.chibi-spark.one {
+  right: 10%;
+  top: 22%;
+}
+
+.chibi-spark.two {
+  left: 13%;
+  top: 31%;
+  width: 6%;
+  height: 6%;
 }
 
 .hug-layer span {
@@ -1491,15 +1658,15 @@ button {
   }
 }
 
-.action-hand img {
+.action-hand .chibi-figure {
   animation-name: chibi-hand;
 }
 
-.action-pat img {
+.action-pat .chibi-figure {
   animation-name: chibi-pat;
 }
 
-.action-stay img {
+.action-stay .chibi-figure {
   animation-name: chibi-nuzzle;
 }
 
@@ -1713,8 +1880,8 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hug-layer img,
-  .alarm-figure img {
+  .hug-layer .chibi-figure,
+  .alarm-figure .chibi-figure {
     animation: none;
   }
 }

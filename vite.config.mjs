@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import chatHandler from "./api/chat.js";
+import { resolve } from "node:path";
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -57,6 +58,14 @@ export default defineConfig(({ mode }) => {
     server: {
       warmup: {
         clientFiles: ["./src/main.jsx"],
+      },
+    },
+    build: {
+      rollupOptions: {
+        input: {
+          main: resolve(process.cwd(), "index.html"),
+          experiment3d: resolve(process.cwd(), "experiments/xia-xiaoyin-3d.html"),
+        },
       },
     },
     plugins: [localApiPlugin(), react()],
