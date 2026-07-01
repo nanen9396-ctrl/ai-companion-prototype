@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
   Briefcase,
@@ -249,11 +249,20 @@ function reminderLine(task) {
   return `${companionName}提醒你，该${title.replace(/提醒$/, "")}了。`;
 }
 
+const chibiAssets = {
+  hug: "/assets/chibi-xiaxiaoyin.png",
+  hand: "/assets/chibi-hand.png",
+  pat: "/assets/chibi-pat.png",
+  stay: "/assets/chibi-stay.png",
+  remind: "/assets/chibi-xiaxiaoyin.png",
+};
+
 function ChibiFigure({ mood = "hug", label = "Q 版动作" }) {
+  const src = chibiAssets[mood] || chibiAssets.hug;
   return (
     <div className={`chibi-figure chibi-${mood}`} role="img" aria-label={`${companionName} ${label}`}>
       <span className="chibi-shadow" />
-      <img src="/assets/chibi-xiaxiaoyin.png" alt="" aria-hidden="true" />
+      <img src={src} alt="" aria-hidden="true" />
       <span className="chibi-spark one" />
       <span className="chibi-spark two" />
     </div>
@@ -587,7 +596,7 @@ export function App() {
     addTimelineMemory(`${nowLabel()}，${action.memory}`);
     setModelTone("warm");
     setActionEffect({ key: action.key, label: action.label, stamp: Date.now() });
-    window.setTimeout(() => setActionEffect(null), 2400);
+    window.setTimeout(() => setActionEffect(null), 4800);
   }
 
   return (
@@ -751,15 +760,9 @@ export function App() {
                 addTask();
               }}
             >
-              <div className="time-picker" aria-label="安排时间">
-                <div className="time-picker-top">
-                  <button type="button" aria-label="关闭时间选择">
-                    ×
-                  </button>
+                <div className="time-picker" aria-label="安排时间">
+                  <div className="time-picker-top">
                   <strong>编辑时间</strong>
-                  <button type="button" aria-label="确认安排时间">
-                    ✓
-                  </button>
                 </div>
                 <div className="time-wheels">
                   <TimeWheel options={periodOptions} value={taskTime.period} onChange={(value) => updateTaskTime("period", value)} ariaLabel="上午或下午" />

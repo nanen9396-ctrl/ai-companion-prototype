@@ -814,8 +814,7 @@ button {
 .time-picker-top {
   height: 34px;
   display: grid;
-  grid-template-columns: 44px 1fr 44px;
-  align-items: center;
+  place-items: center;
   margin-bottom: 3px;
   color: #1d1d1f;
 }
@@ -823,25 +822,6 @@ button {
 .time-picker-top strong {
   font-size: 17px;
   font-weight: 720;
-}
-
-.time-picker-top button {
-  width: 34px;
-  height: 34px;
-  display: inline-grid;
-  place-items: center;
-  color: #1d1d1f;
-  background: transparent;
-  font-size: 28px;
-  font-weight: 300;
-  line-height: 1;
-}
-
-.time-picker-top button:last-child {
-  justify-self: end;
-  color: #0a84ff;
-  font-size: 25px;
-  font-weight: 520;
 }
 
 .time-wheels {
@@ -1591,7 +1571,7 @@ button {
 .hug-layer .chibi-figure {
   width: min(84vw, 340px);
   height: min(110vw, 478px);
-  animation: chibi-hug 2.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: chibi-hug 4.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .alarm-figure .chibi-figure {
@@ -1917,6 +1897,11 @@ button {
 
 .action-stay .chibi-figure {
   animation-name: chibi-nuzzle;
+}
+
+.hug-layer.action-stay {
+  place-items: center start;
+  padding-left: max(8px, 3vw);
 }
 
 @keyframes chibi-hand {
