@@ -219,7 +219,7 @@ function TimeWheel({ options, value, onChange, ariaLabel }) {
       onScroll={() => {
         if (ignoreScrollRef.current) return;
         window.clearTimeout(timerRef.current);
-        timerRef.current = window.setTimeout(settleSelection, 90);
+        timerRef.current = window.setTimeout(settleSelection, 40);
       }}
     >
       {options.map((option) => {
@@ -440,17 +440,19 @@ export function App() {
     const title = newTaskTitle.trim();
     if (!title) return;
 
-    setTasks((current) => [
-      ...current,
-      {
-        id: Date.now(),
-        time: newTaskTime || "20:00",
-        title,
-        note: newTaskNote.trim() || "自定义安排",
-        icon: Calendar,
-        done: false,
-      },
-    ]);
+    setTasks((current) =>
+      [
+        ...current,
+        {
+          id: Date.now(),
+          time: newTaskTime || "20:00",
+          title,
+          note: newTaskNote.trim(),
+          icon: Calendar,
+          done: false,
+        },
+      ].sort((a, b) => a.time.localeCompare(b.time)),
+    );
     setNewTaskTitle("");
     setNewTaskNote("");
   }
@@ -596,7 +598,7 @@ export function App() {
     addTimelineMemory(`${nowLabel()}，${action.memory}`);
     setModelTone("warm");
     setActionEffect({ key: action.key, label: action.label, stamp: Date.now() });
-    window.setTimeout(() => setActionEffect(null), 4800);
+    window.setTimeout(() => setActionEffect(null), 3400);
   }
 
   return (
@@ -796,7 +798,7 @@ export function App() {
                       <span className="task-time">{task.time}</span>
                       <span className="task-copy">
                         <strong>{task.title}</strong>
-                        <small>{task.note}</small>
+                        {task.note ? <small>{task.note}</small> : null}
                       </span>
                       <span className={`task-check ${task.done ? "done" : ""}`}>
                         {task.done ? <Check size={18} /> : <Circle size={18} />}

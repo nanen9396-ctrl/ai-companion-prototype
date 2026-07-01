@@ -1571,7 +1571,7 @@ button {
 .hug-layer .chibi-figure {
   width: min(84vw, 340px);
   height: min(110vw, 478px);
-  animation: chibi-hug 4.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: chibi-hug 3.2s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .alarm-figure .chibi-figure {
@@ -1869,7 +1869,8 @@ button {
     opacity: 0;
     transform: translateY(70px) scale(0.72);
   }
-  18% {
+  10%,
+  86% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
@@ -1909,7 +1910,8 @@ button {
     opacity: 0;
     transform: translateY(54px) scale(0.76) rotate(-8deg);
   }
-  18% {
+  10%,
+  86% {
     opacity: 1;
     transform: translateY(0) scale(1) rotate(0);
   }
@@ -1932,7 +1934,8 @@ button {
     opacity: 0;
     transform: translateY(60px) scale(0.76);
   }
-  18% {
+  10%,
+  86% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
@@ -1955,7 +1958,8 @@ button {
     opacity: 0;
     transform: translateX(52px) translateY(42px) scale(0.74);
   }
-  18% {
+  10%,
+  86% {
     opacity: 1;
     transform: translateX(0) translateY(0) scale(1);
   }
