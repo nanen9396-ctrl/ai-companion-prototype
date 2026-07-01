@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
   Briefcase,
@@ -180,6 +180,67 @@ function composeTaskTime({ period, hour, minute }) {
   return `${String(hour24).padStart(2, "0")}:${minute}`;
 }
 
+function TimeWheel({ options, value, onChange, ariaLabel }) {
+  const listRef = useRef(null);
+  const timerRef = useRef(null);
+  const ignoreScrollRef = useRef(false);
+  const itemHeight = 38;
+  const getValue = (option) => (typeof option === "string" ? option : option.value);
+  const getLabel = (option) => (typeof option === "string" ? option : option.label);
+
+  useEffect(() => {
+    const index = Math.max(0, options.findIndex((option) => getValue(option) === value));
+    const node = listRef.current;
+    if (node && Math.abs(node.scrollTop - index * itemHeight) > 2) {
+      ignoreScrollRef.current = true;
+      node.scrollTo({ top: index * itemHeight, behavior: "auto" });
+      window.setTimeout(() => {
+        ignoreScrollRef.current = false;
+      }, 0);
+    }
+  }, [options, value]);
+
+  function settleSelection() {
+    const node = listRef.current;
+    if (!node) return;
+    const index = Math.max(0, Math.min(options.length - 1, Math.round(node.scrollTop / itemHeight)));
+    const nextValue = getValue(options[index]);
+    onChange(nextValue);
+    node.scrollTo({ top: index * itemHeight, behavior: "smooth" });
+  }
+
+  return (
+    <div
+      className="wheel-column"
+      ref={listRef}
+      role="listbox"
+      aria-label={ariaLabel}
+      tabIndex={0}
+      onScroll={() => {
+        if (ignoreScrollRef.current) return;
+        window.clearTimeout(timerRef.current);
+        timerRef.current = window.setTimeout(settleSelection, 90);
+      }}
+    >
+      {options.map((option) => {
+        const optionValue = getValue(option);
+        return (
+          <button
+            className={`wheel-option ${optionValue === value ? "selected" : ""}`}
+            type="button"
+            role="option"
+            aria-selected={optionValue === value}
+            key={optionValue}
+            onClick={() => onChange(optionValue)}
+          >
+            {getLabel(option)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function reminderLine(task) {
   const title = task?.title || "安排";
   if (/喝水|水/.test(title)) return `${companionName}提醒你，该喝点水了。`;
@@ -192,7 +253,7 @@ function ChibiFigure({ mood = "hug", label = "Q 版动作" }) {
   return (
     <div className={`chibi-figure chibi-${mood}`} role="img" aria-label={`${companionName} ${label}`}>
       <span className="chibi-shadow" />
-      <img src="/assets/chibi-xiaxiaoyin.svg" alt="" aria-hidden="true" />
+      <img src="/assets/chibi-xiaxiaoyin.png" alt="" aria-hidden="true" />
       <span className="chibi-spark one" />
       <span className="chibi-spark two" />
     </div>
@@ -695,33 +756,15 @@ export function App() {
                   <button type="button" aria-label="关闭时间选择">
                     ×
                   </button>
-                  <strong>编辑闹钟</strong>
-                  <button type="submit" aria-label="保存安排时间">
+                  <strong>编辑时间</strong>
+                  <button type="button" aria-label="确认安排时间">
                     ✓
                   </button>
                 </div>
                 <div className="time-wheels">
-                  <select value={taskTime.period} onChange={(event) => updateTaskTime("period", event.target.value)} aria-label="上午或下午" size={2}>
-                    {periodOptions.map((period) => (
-                      <option value={period.value} key={period.value}>
-                        {period.label}
-                      </option>
-                    ))}
-                  </select>
-                  <select value={taskTime.hour} onChange={(event) => updateTaskTime("hour", event.target.value)} aria-label="小时" size={5}>
-                    {hourOptions.map((hour) => (
-                      <option value={hour} key={hour}>
-                        {hour}
-                      </option>
-                    ))}
-                  </select>
-                  <select value={taskTime.minute} onChange={(event) => updateTaskTime("minute", event.target.value)} aria-label="分钟" size={5}>
-                    {minuteOptions.map((minute) => (
-                      <option value={minute} key={minute}>
-                        {minute}
-                      </option>
-                    ))}
-                  </select>
+                  <TimeWheel options={periodOptions} value={taskTime.period} onChange={(value) => updateTaskTime("period", value)} ariaLabel="上午或下午" />
+                  <TimeWheel options={hourOptions} value={taskTime.hour} onChange={(value) => updateTaskTime("hour", value)} ariaLabel="小时" />
+                  <TimeWheel options={minuteOptions} value={taskTime.minute} onChange={(value) => updateTaskTime("minute", value)} ariaLabel="分钟" />
                 </div>
               </div>
               <input
