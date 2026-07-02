@@ -279,7 +279,7 @@ function ChibiFigure({ mood = "hug", label = "Q 版动作" }) {
 export function App() {
   const [mood, setMood] = useState(3);
   const [tasks, setTasks] = useState(initialTasks);
-  const [activeScene, setActiveScene] = useState("home");
+  const [activeScene, setActiveScene] = useState(null);
   const [pendingScene, setPendingScene] = useState(null);
   const [activeTab, setActiveTab] = useState(() => {
     const tab = new URLSearchParams(window.location.search).get("tab");
@@ -438,7 +438,7 @@ export function App() {
 
   function cancelNotificationAction(item) {
     if (item.actionType === "scene") {
-      setActiveScene(item.previousScene || "home");
+      setActiveScene(item.previousScene ?? null);
     }
     if (item.actionType === "pendingScene" && pendingScene === item.sceneId) {
       setPendingScene(null);
@@ -721,11 +721,16 @@ export function App() {
           preferences,
           userId: activation?.userId,
           profile: userProfile,
+          devices,
         }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || "DeepSeek request failed");
-      if (isActivated) await fetchDevices();
+      if (Array.isArray(data.devices)) {
+        setDevices(data.devices);
+      } else if (isActivated) {
+        await fetchDevices();
+      }
       await typeAssistantReply(data.reply);
       if (!isActivated) setFreeMessagesSent((count) => count + 1);
     } catch (error) {

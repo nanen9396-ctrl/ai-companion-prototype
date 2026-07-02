@@ -1,4 +1,4 @@
-import { executeDeviceControl } from "./models/device.js";
+import { executeDeviceControl, listDevices } from "./models/device.js";
 import { getUserProfile } from "./models/user.js";
 
 const SYSTEM_PROMPT = `你是女性向 AI 陪伴角色“夏萧因”的测试版对话体。你必须承认自己是 AI，不冒充真人或游戏官方角色。
@@ -72,6 +72,15 @@ function profilePrompt(profile) {
   return lines.length ? `用户资料：\n${lines.join("\n")}` : "";
 }
 
+function devicesPrompt(devices) {
+  if (!devices?.length) return "";
+  const lines = devices.map((device) => {
+    const location = device.location ? `，位置：${device.location}` : "";
+    return `- ${device.device_name}（类型：${device.device_type}，状态：${device.status}${location}）`;
+  });
+  return `用户已添加的智能家居设备：\n${lines.join("\n")}\n如果用户没说完整设备名，但意图明显，请优先匹配这些设备；例如只有一个灯类设备时，“开灯”应调用该灯的设备名。`;
+}
+
 function weatherText(code) {
   if (code === 0) return "晴";
   if ([1, 2, 3].includes(code)) return "多云";
@@ -132,13 +141,46 @@ function parseToolArgs(raw) {
   }
 }
 
-async function runToolCall(toolCall, userId, profile) {
+function applyDeviceControlToList(devices, deviceName, action) {
+  const wanted = String(deviceName || "").trim().toLowerCase();
+  const index = devices.findIndex((device) => String(device.device_name || "").trim().toLowerCase() === wanted);
+  if (index < 0) return null;
+
+  const normalizedAction = String(action || "").trim().toLowerCase();
+  let status;
+  let content;
+  if (normalizedAction === "turn_on") {
+    status = "on";
+    content = `${devices[index].device_name}已打开。`;
+  } else if (normalizedAction === "turn_off") {
+    status = "off";
+    content = `${devices[index].device_name}已关闭。`;
+  } else if (normalizedAction.startsWith("set_temperature")) {
+    const temperature = normalizedAction.match(/-?\d+(\.\d+)?/)?.[0];
+    if (!temperature) return { content: "请告诉我想把温度设置到多少度。", devices };
+    status = `${temperature}°C`;
+    content = `${devices[index].device_name}已调到${temperature}度。`;
+  } else {
+    return { content: "暂不支持该操作。", devices };
+  }
+
+  const nextDevices = devices.map((device, deviceIndex) =>
+    deviceIndex === index ? { ...device, status, updated_at: new Date().toISOString() } : device,
+  );
+  return { content, devices: nextDevices };
+}
+
+async function runToolCall(toolCall, userId, profile, fallbackDevices = []) {
   const name = toolCall.function?.name || toolCall.name;
   const args = parseToolArgs(toolCall.function?.arguments || toolCall.arguments);
 
   if (name === "control_device") {
     if (!userId) return "用户尚未激活，不能控制设备。";
-    return executeDeviceControl(userId, args.device_name, args.action);
+    const result = await executeDeviceControl(userId, args.device_name, args.action);
+    if (String(result).startsWith("没有找到") && fallbackDevices.length) {
+      return applyDeviceControlToList(fallbackDevices, args.device_name, args.action)?.content || result;
+    }
+    return result;
   }
 
   if (name === "get_weather") {
@@ -163,6 +205,9 @@ export default async function handler(req, res) {
     const messages = Array.isArray(body.messages) ? body.messages : [];
     const userId = String(body.userId || req.headers?.["x-user-id"] || "").trim();
     const profile = userId ? await getUserProfile(userId) : body.profile || null;
+    const clientDevices = Array.isArray(body.devices) ? body.devices : [];
+    const storedDevices = userId ? await listDevices(userId) : [];
+    const currentDevices = storedDevices.length ? storedDevices : clientDevices;
     const preferencePrompt = Array.isArray(body.preferences)
       ? body.preferences.map((key) => PREFERENCE_PROMPTS[key]).filter(Boolean).join("\n")
       : "";
@@ -175,7 +220,12 @@ export default async function handler(req, res) {
       .filter((message) => message.content.trim());
 
     const baseMessages = [
-      { role: "system", content: [SYSTEM_PROMPT, profilePrompt(profile), preferencePrompt].filter(Boolean).join("\n\n") },
+      {
+        role: "system",
+        content: [SYSTEM_PROMPT, profilePrompt(profile), devicesPrompt(currentDevices), preferencePrompt]
+          .filter(Boolean)
+          .join("\n\n"),
+      },
       ...cleanMessages,
     ];
 
@@ -193,8 +243,17 @@ export default async function handler(req, res) {
 
     if (toolCalls.length) {
       const toolMessages = [];
+      let devicesChanged = false;
+      let responseDevices = currentDevices;
       for (const toolCall of toolCalls) {
-        const result = await runToolCall(toolCall, userId, profile);
+        const name = toolCall.function?.name || toolCall.name;
+        const args = parseToolArgs(toolCall.function?.arguments || toolCall.arguments);
+        const result = await runToolCall(toolCall, userId, profile, responseDevices);
+        if (name === "control_device") {
+          devicesChanged = true;
+          const localResult = applyDeviceControlToList(responseDevices, args.device_name, args.action);
+          if (localResult?.devices) responseDevices = localResult.devices;
+        }
         toolMessages.push({
           role: "tool",
           tool_call_id: toolCall.id || "legacy_function_call",
@@ -205,8 +264,11 @@ export default async function handler(req, res) {
       const finalData = await callDeepSeek(apiKey, {
         messages: [...baseMessages, assistantMessage, ...toolMessages],
       });
+      const storedAfter = devicesChanged && userId ? await listDevices(userId) : [];
+      const updatedDevices = devicesChanged ? (storedAfter.length ? storedAfter : responseDevices) : undefined;
       return res.status(200).json({
         reply: finalData?.choices?.[0]?.message?.content?.trim() || toolMessages.at(-1)?.content || "我处理好了。",
+        devices: updatedDevices,
       });
     }
 
