@@ -35,10 +35,26 @@ Recommended setup:
 4. Add environment variables in Vercel:
    - `DEEPSEEK_API_KEY`: your DeepSeek API key
    - `DEEPSEEK_MODEL`: optional, defaults to `deepseek-v4-flash`
+   - `ACTIVATION_CODES`: comma-separated activation codes
+   - `AI_COMPANION_STORE_PATH`: optional local JSON-store path for prototype data
 5. Every future code update pushed to GitHub will update the same Vercel project link.
 
 ## DeepSeek Chat
 
 The browser calls `/api/chat`; the serverless route reads `DEEPSEEK_API_KEY` and forwards messages to DeepSeek. Do not put the API key in frontend code.
 
+The chat API now supports DeepSeek tool calling:
+
+- `control_device`: controls a user's saved device.
+- `get_weather`: queries Open-Meteo for live weather using the user's saved city.
+
+Device CRUD lives at `/api/devices` and requires the activated `x-user-id` header. Activation and profile collection live at `/api/activate`.
+
 Plain `pnpm run dev` also serves `/api/chat` locally.
+
+## Database
+
+Prototype data uses a file-backed store when no production database adapter is configured. SQL migrations for a real database are in `migrations/`:
+
+- `001_create_users_and_profiles.sql`
+- `002_create_devices.sql`

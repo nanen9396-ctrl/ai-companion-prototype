@@ -83,7 +83,12 @@ const storageKeys = {
   preferences: "ai-companion.preferences",
   notifiedTasks: "ai-companion.notifiedTasks",
   modelTone: "ai-companion.modelTone",
+  activation: "ai-companion.activation",
+  userProfile: "ai-companion.userProfile",
+  freeMessagesSent: "ai-companion.freeMessagesSent",
 };
+
+const deviceTypeOptions = ["灯", "空调", "窗帘", "插座", "音箱", "其他"];
 
 const preferenceOptions = [
   { key: "gentle", label: "说话更温柔", note: "多安抚，少冷感" },
@@ -293,19 +298,32 @@ export function App() {
   const [preferences, setPreferences] = useState(() => loadStoredValue(storageKeys.preferences, ["gentle"]));
   const [notifiedTaskKeys, setNotifiedTaskKeys] = useState(() => loadStoredValue(storageKeys.notifiedTasks, []));
   const [modelTone, setModelTone] = useState(() => loadStoredValue(storageKeys.modelTone, "calm"));
+  const [activation, setActivation] = useState(() => loadStoredValue(storageKeys.activation, null));
+  const [userProfile, setUserProfile] = useState(() => loadStoredValue(storageKeys.userProfile, null));
+  const [freeMessagesSent, setFreeMessagesSent] = useState(() => loadStoredValue(storageKeys.freeMessagesSent, 0));
   const [profilePanel, setProfilePanel] = useState(null);
   const [actionEffect, setActionEffect] = useState(null);
   const [activeReminder, setActiveReminder] = useState(null);
   const [showConversation, setShowConversation] = useState(false);
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const [profileDraft, setProfileDraft] = useState(() => loadStoredValue(storageKeys.userProfile, {
+    nickname: "",
+    location: "",
+    conversation_style: "",
+  }));
+  const [devices, setDevices] = useState([]);
+  const [deviceDraft, setDeviceDraft] = useState({ device_name: "", device_type: "灯", location: "" });
   const [draft, setDraft] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [showTools, setShowTools] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
 
+  const isActivated = Boolean(activation?.userId);
+  const isRestrictedTab = !isActivated && ["record", "smart"].includes(activeTab);
   const activeMood = moods[mood];
   const completedCount = useMemo(() => tasks.filter((task) => task.done).length, [tasks]);
   const unreadCount = notifications.filter((item) => !item.read).length;
-  const pageClass = `tab-${activeTab}`;
+  const pageClass = `tab-${activeTab} ${isRestrictedTab ? "is-restricted" : ""}`;
   const modelState = modelStates[modelTone] || modelStates.calm;
   const taskTime = splitTaskTime(newTaskTime);
 
@@ -332,6 +350,26 @@ export function App() {
   useEffect(() => {
     localStorage.setItem(storageKeys.modelTone, JSON.stringify(modelTone));
   }, [modelTone]);
+
+  useEffect(() => {
+    if (activation) {
+      localStorage.setItem(storageKeys.activation, JSON.stringify(activation));
+      setRedeemedCode(activation.code || "");
+    }
+  }, [activation]);
+
+  useEffect(() => {
+    if (userProfile) localStorage.setItem(storageKeys.userProfile, JSON.stringify(userProfile));
+  }, [userProfile]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKeys.freeMessagesSent, JSON.stringify(freeMessagesSent));
+  }, [freeMessagesSent]);
+
+  useEffect(() => {
+    if (!isActivated) return;
+    fetchDevices();
+  }, [isActivated, activation?.userId]);
 
   useEffect(() => {
     function checkDueTasks() {
@@ -526,6 +564,97 @@ export function App() {
     }
   }
 
+  async function redeemActivation() {
+    const code = activationCode.trim();
+    if (!code) return;
+    try {
+      const response = await fetch("/api/activate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || "激活失败");
+      const nextActivation = { code: code.toUpperCase(), userId: data.userId };
+      setActivation(nextActivation);
+      setRedeemedCode(nextActivation.code);
+      if (data.profile) {
+        setUserProfile(data.profile);
+        setProfileDraft(data.profile);
+      }
+      setShowProfileSetup(data.needsProfile !== false);
+    } catch (error) {
+      addNotification({ title: "激活失败", text: error.message, tab: "me" });
+    }
+  }
+
+  async function saveProfileSetup() {
+    if (!activation?.code) return;
+    const profile = {
+      nickname: profileDraft.nickname?.trim() || "",
+      location: profileDraft.location?.trim() || "",
+      conversation_style: profileDraft.conversation_style?.trim() || "",
+    };
+    const response = await fetch("/api/activate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: activation.code, profile }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      addNotification({ title: "资料保存失败", text: data?.error || "请稍后再试", tab: "me" });
+      return;
+    }
+    setUserProfile(data.profile || profile);
+    setShowProfileSetup(false);
+    addNotification({ title: "资料已保存", text: "他会把这些信息用于之后的对话。", tab: "me" });
+  }
+
+  async function fetchDevices() {
+    if (!activation?.userId) return;
+    const response = await fetch("/api/devices", {
+      headers: { "x-user-id": activation.userId },
+    });
+    const data = await response.json().catch(() => ({}));
+    if (response.ok) setDevices(data.devices || []);
+  }
+
+  async function addDevice(event) {
+    event.preventDefault();
+    if (!activation?.userId || !deviceDraft.device_name.trim()) return;
+    const response = await fetch("/api/devices", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-user-id": activation.userId },
+      body: JSON.stringify(deviceDraft),
+    });
+    if (response.ok) {
+      setDeviceDraft({ device_name: "", device_type: "灯", location: "" });
+      await fetchDevices();
+    }
+  }
+
+  async function renameDevice(device, field, value) {
+    if (!activation?.userId) return;
+    const next = { ...device, [field]: value };
+    setDevices((current) => current.map((item) => (item.id === device.id ? next : item)));
+    await fetch("/api/devices", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "x-user-id": activation.userId },
+      body: JSON.stringify({ id: device.id, [field]: value }),
+    });
+    await fetchDevices();
+  }
+
+  async function removeDevice(id) {
+    if (!activation?.userId) return;
+    await fetch("/api/devices", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", "x-user-id": activation.userId },
+      body: JSON.stringify({ id }),
+    });
+    await fetchDevices();
+  }
+
   async function typeAssistantReply(text) {
     const id = Date.now();
     const time = nowLabel();
@@ -544,6 +673,13 @@ export function App() {
   async function sendMessage(forcedText) {
     const text = (forcedText ?? draft).trim();
     if (!text || isReplying) return;
+    if (!isActivated && freeMessagesSent >= 10) {
+      setMessages((current) => [
+        ...current,
+        { from: "system", text: "功能受限，不可用。首页免费对话已用完，请先在「我的」输入激活码。", time: nowLabel() },
+      ]);
+      return;
+    }
 
     const outgoing = { from: "me", text, time: nowLabel() };
     const nextMessages = [...messages, outgoing];
@@ -568,11 +704,14 @@ export function App() {
               content: message.text,
             })),
           preferences,
+          userId: activation?.userId,
+          profile: userProfile,
         }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || "DeepSeek request failed");
       await typeAssistantReply(data.reply);
+      if (!isActivated) setFreeMessagesSent((count) => count + 1);
     } catch (error) {
       console.error(error);
       setMessages((current) => [
@@ -704,6 +843,17 @@ export function App() {
           </div>
         </section>
 
+        {isRestrictedTab && (
+          <section className="surface restricted-panel" aria-label="功能受限">
+            <Lock size={34} />
+            <h2>功能受限，不可用</h2>
+            <p>当前账号尚未激活。你可以继续使用首页 10 条免费对话，激活后会开放记录、智能管家、设备管理和联网能力。</p>
+            <button className="primary-button" type="button" onClick={() => setActiveTab("me")}>
+              去激活
+            </button>
+          </section>
+        )}
+
         <div className="record-switch" role="tablist" aria-label="记录内容切换">
           <button
             className={recordView === "schedule" ? "active" : ""}
@@ -819,6 +969,10 @@ export function App() {
           </section>
         </div>
 
+        <section className="smart-butler-stage" aria-label="智能管家形象">
+          <img src="/assets/smart-butler-xiaxiaoyin.png" alt={`${companionName} 智能管家形象`} />
+        </section>
+
         <section className="surface smart-home" aria-labelledby="home-title">
           <div className="section-heading">
             <div>
@@ -848,6 +1002,62 @@ export function App() {
               );
             })}
           </div>
+
+          <section className="device-manager" aria-label="设备管理">
+            <h3>我的设备</h3>
+            <form className="device-add" onSubmit={addDevice}>
+              <input
+                value={deviceDraft.device_name}
+                onChange={(event) => setDeviceDraft((current) => ({ ...current, device_name: event.target.value }))}
+                placeholder="设备名，如客厅灯"
+                aria-label="设备名"
+              />
+              <select
+                value={deviceDraft.device_type}
+                onChange={(event) => setDeviceDraft((current) => ({ ...current, device_type: event.target.value }))}
+                aria-label="设备类型"
+              >
+                {deviceTypeOptions.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+              <input
+                value={deviceDraft.location}
+                onChange={(event) => setDeviceDraft((current) => ({ ...current, location: event.target.value }))}
+                placeholder="位置，如客厅"
+                aria-label="设备位置"
+              />
+              <button className="primary-button" type="submit">
+                添加
+              </button>
+            </form>
+            <div className="device-list">
+              {devices.length === 0 ? (
+                <p>还没有设备。先添加一个“客厅灯”，之后你可以直接对他说“打开客厅灯”。</p>
+              ) : (
+                devices.map((device) => (
+                  <div className="device-row" key={device.id}>
+                    <input
+                      value={device.device_name}
+                      onChange={(event) => renameDevice(device, "device_name", event.target.value)}
+                      aria-label="修改设备名"
+                    />
+                    <input
+                      value={device.location || ""}
+                      onChange={(event) => renameDevice(device, "location", event.target.value)}
+                      aria-label="修改设备位置"
+                    />
+                    <span>{device.status}</span>
+                    <button type="button" onClick={() => removeDevice(device.id)} aria-label={`删除${device.device_name}`}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
         </section>
 
         <section className="risk-banner" aria-label="风险设备操作确认">
@@ -1019,9 +1229,7 @@ export function App() {
             className="redeem-box"
             onSubmit={(event) => {
               event.preventDefault();
-              if (activationCode.trim()) {
-                setRedeemedCode(activationCode.trim().toUpperCase());
-              }
+              redeemActivation();
             }}
           >
             <label htmlFor="activation-code">激活码兑换</label>
@@ -1095,6 +1303,46 @@ export function App() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+        {showProfileSetup && (
+          <div className="modal-backdrop" role="presentation">
+            <div className="profile-setup-modal" role="dialog" aria-modal="true" aria-label="完善陪伴资料">
+              <button className="modal-close" type="button" onClick={() => setShowProfileSetup(false)} aria-label="关闭">
+                <X size={22} />
+              </button>
+              <h2>激活属于你的{companionName}</h2>
+              <p>这些信息只用于让他更自然地回应你，不需要填写真实隐私。</p>
+              <label>
+                他怎么称呼你
+                <input
+                  value={profileDraft.nickname || ""}
+                  onChange={(event) => setProfileDraft((current) => ({ ...current, nickname: event.target.value }))}
+                  placeholder="例如：南南"
+                />
+              </label>
+              <label>
+                所在城市
+                <input
+                  value={profileDraft.location || ""}
+                  onChange={(event) => setProfileDraft((current) => ({ ...current, location: event.target.value }))}
+                  placeholder="例如：上海"
+                />
+              </label>
+              <label>
+                额外偏好
+                <input
+                  value={profileDraft.conversation_style || ""}
+                  onChange={(event) =>
+                    setProfileDraft((current) => ({ ...current, conversation_style: event.target.value }))
+                  }
+                  placeholder="例如：多提醒我休息"
+                />
+              </label>
+              <button className="primary-button" type="button" onClick={saveProfileSetup}>
+                保存并开始
+              </button>
             </div>
           </div>
         )}

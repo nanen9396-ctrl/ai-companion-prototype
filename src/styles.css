@@ -579,7 +579,6 @@ button {
 .tab-smart .today-panel,
 .tab-smart .content-grid,
 .tab-smart .record-switch,
-.tab-smart .composer,
 .tab-smart .personal-center,
 .tab-me .model-stage,
 .tab-me .today-panel,
@@ -604,10 +603,20 @@ button {
   display: none;
 }
 
+.tab-smart .smart-butler-stage,
 .tab-smart .smart-home,
 .tab-smart .risk-banner,
 .tab-me .personal-center {
   display: block;
+}
+
+.tab-record.is-restricted .record-switch,
+.tab-record.is-restricted .content-grid,
+.tab-smart.is-restricted .smart-butler-stage,
+.tab-smart.is-restricted .smart-home,
+.tab-smart.is-restricted .risk-banner,
+.tab-smart.is-restricted .composer {
+  display: none;
 }
 
 .surface {
@@ -917,10 +926,138 @@ button {
   margin-bottom: 14px;
 }
 
+.smart-butler-stage {
+  display: none;
+  min-height: 510px;
+  margin: -24px -12px 12px;
+  border-radius: 0 0 34px 34px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 28px 58px rgba(70, 52, 76, 0.18);
+  background: #171625;
+}
+
+.smart-butler-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 42%, rgba(251, 244, 242, 0.92) 100%);
+  pointer-events: none;
+}
+
+.smart-butler-stage img {
+  width: 100%;
+  height: 100%;
+  min-height: 510px;
+  display: block;
+  object-fit: cover;
+  object-position: 58% top;
+}
+
+.restricted-panel {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin: 22px 0 16px;
+  padding: 28px 20px;
+  text-align: center;
+}
+
+.restricted-panel svg {
+  color: var(--teal-deep);
+}
+
+.restricted-panel h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.restricted-panel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
 .scene-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+.device-manager {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.device-manager h3 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.device-add {
+  display: grid;
+  grid-template-columns: 1fr 96px;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.device-add input,
+.device-add select,
+.device-row input {
+  min-width: 0;
+  height: 38px;
+  border-radius: 14px;
+  border: 1px solid rgba(121, 79, 111, 0.14);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.78);
+  padding: 0 11px;
+  outline: 0;
+}
+
+.device-add input:first-child,
+.device-add .primary-button {
+  grid-column: 1 / -1;
+}
+
+.device-list {
+  display: grid;
+  gap: 8px;
+}
+
+.device-list p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.device-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 52px 34px;
+  gap: 7px;
+  align-items: center;
+}
+
+.device-row span {
+  min-width: 0;
+  color: var(--teal-deep);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.device-row button {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  color: #b56d83;
+  background: rgba(255, 246, 244, 0.78);
+  border: 1px solid rgba(184, 111, 142, 0.12);
 }
 
 .scene {
@@ -1185,6 +1322,52 @@ button {
 .conversation-modal h2 {
   margin: 0 42px 14px 4px;
   font-size: 18px;
+}
+
+.profile-setup-modal {
+  width: min(100%, 350px);
+  border-radius: 24px;
+  background: rgba(255, 252, 248, 0.98);
+  padding: 24px 18px 18px;
+  color: var(--ink);
+  position: relative;
+  box-shadow: 0 26px 70px rgba(52, 40, 66, 0.26);
+}
+
+.profile-setup-modal h2 {
+  margin: 0 40px 8px 0;
+  font-size: 22px;
+}
+
+.profile-setup-modal p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.profile-setup-modal label {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 11px;
+  color: #5f4a6a;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.profile-setup-modal input {
+  height: 42px;
+  border-radius: 15px;
+  border: 1px solid rgba(121, 79, 111, 0.14);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.78);
+  padding: 0 12px;
+  outline: 0;
+}
+
+.profile-setup-modal .primary-button {
+  width: 100%;
+  margin-top: 4px;
 }
 
 .conversation-scroll {
