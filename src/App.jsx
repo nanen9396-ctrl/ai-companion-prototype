@@ -7,6 +7,8 @@ import {
   ChevronRight,
   Circle,
   Compass,
+  Eye,
+  EyeOff,
   Heart,
   Home,
   Lamp,
@@ -312,7 +314,8 @@ export function App() {
     conversation_style: "",
   }));
   const [devices, setDevices] = useState([]);
-  const [deviceDraft, setDeviceDraft] = useState({ device_name: "", device_type: "灯", location: "" });
+  const [deviceDraft, setDeviceDraft] = useState({ device_name: "", device_type: "灯" });
+  const [showActivationCode, setShowActivationCode] = useState(false);
   const [draft, setDraft] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [showTools, setShowTools] = useState(false);
@@ -369,7 +372,7 @@ export function App() {
   useEffect(() => {
     if (!isActivated) return;
     fetchDevices();
-  }, [isActivated, activation?.userId]);
+  }, [isActivated, activation?.userId, activeTab]);
 
   useEffect(() => {
     function checkDueTasks() {
@@ -627,8 +630,8 @@ export function App() {
       headers: { "Content-Type": "application/json", "x-user-id": activation.userId },
       body: JSON.stringify(deviceDraft),
     });
-    if (response.ok) {
-      setDeviceDraft({ device_name: "", device_type: "灯", location: "" });
+      if (response.ok) {
+      setDeviceDraft({ device_name: "", device_type: "灯" });
       await fetchDevices();
     }
   }
@@ -641,6 +644,18 @@ export function App() {
       method: "PATCH",
       headers: { "Content-Type": "application/json", "x-user-id": activation.userId },
       body: JSON.stringify({ id: device.id, [field]: value }),
+    });
+    await fetchDevices();
+  }
+
+  async function toggleDevicePower(device) {
+    if (!activation?.userId) return;
+    const status = device.status === "on" ? "off" : "on";
+    setDevices((current) => current.map((item) => (item.id === device.id ? { ...item, status } : item)));
+    await fetch("/api/devices", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "x-user-id": activation.userId },
+      body: JSON.stringify({ id: device.id, status }),
     });
     await fetchDevices();
   }
@@ -710,6 +725,7 @@ export function App() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || "DeepSeek request failed");
+      if (isActivated) await fetchDevices();
       await typeAssistantReply(data.reply);
       if (!isActivated) setFreeMessagesSent((count) => count + 1);
     } catch (error) {
@@ -1023,12 +1039,6 @@ export function App() {
                   </option>
                 ))}
               </select>
-              <input
-                value={deviceDraft.location}
-                onChange={(event) => setDeviceDraft((current) => ({ ...current, location: event.target.value }))}
-                placeholder="位置，如客厅"
-                aria-label="设备位置"
-              />
               <button className="primary-button" type="submit">
                 添加
               </button>
@@ -1041,16 +1051,26 @@ export function App() {
                   <div className="device-row" key={device.id}>
                     <input
                       value={device.device_name}
-                      onChange={(event) => renameDevice(device, "device_name", event.target.value)}
+                      onChange={(event) =>
+                        setDevices((current) =>
+                          current.map((item) =>
+                            item.id === device.id ? { ...item, device_name: event.target.value } : item,
+                          ),
+                        )
+                      }
+                      onBlur={(event) => renameDevice(device, "device_name", event.target.value)}
                       aria-label="修改设备名"
                     />
-                    <input
-                      value={device.location || ""}
-                      onChange={(event) => renameDevice(device, "location", event.target.value)}
-                      aria-label="修改设备位置"
-                    />
                     <span>{device.status}</span>
-                    <button type="button" onClick={() => removeDevice(device.id)} aria-label={`删除${device.device_name}`}>
+                    <button className="device-toggle" type="button" onClick={() => toggleDevicePower(device)}>
+                      {device.status === "on" ? "关闭" : "开启"}
+                    </button>
+                    <button
+                      className="device-delete"
+                      type="button"
+                      onClick={() => removeDevice(device.id)}
+                      aria-label={`删除${device.device_name}`}
+                    >
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -1225,28 +1245,45 @@ export function App() {
             </section>
           )}
 
-          <form
-            className="redeem-box"
-            onSubmit={(event) => {
-              event.preventDefault();
-              redeemActivation();
-            }}
-          >
-            <label htmlFor="activation-code">激活码兑换</label>
-            <div className="redeem-row">
-              <input
-                id="activation-code"
-                value={activationCode}
-                onChange={(event) => setActivationCode(event.target.value)}
-                placeholder="输入你的专属激活码"
-              />
-              <button className="primary-button" type="submit">
-                兑换
-              </button>
-            </div>
-            <p>激活属于你的专属陪伴契约。</p>
-            {redeemedCode && <strong className="redeem-success">已绑定：{redeemedCode}</strong>}
-          </form>
+          {isActivated ? (
+            <section className="redeem-box activation-bound" aria-label="已绑定激活码">
+              <label>激活码</label>
+              <div className="activation-code-row">
+                <strong>{showActivationCode ? activation.code : "XXXXXX"}</strong>
+                <button
+                  className="icon-button"
+                  type="button"
+                  onClick={() => setShowActivationCode((value) => !value)}
+                  aria-label={showActivationCode ? "隐藏激活码" : "显示激活码"}
+                >
+                  {showActivationCode ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <p>专属陪伴契约已激活。</p>
+            </section>
+          ) : (
+            <form
+              className="redeem-box"
+              onSubmit={(event) => {
+                event.preventDefault();
+                redeemActivation();
+              }}
+            >
+              <label htmlFor="activation-code">激活码兑换</label>
+              <div className="redeem-row">
+                <input
+                  id="activation-code"
+                  value={activationCode}
+                  onChange={(event) => setActivationCode(event.target.value)}
+                  placeholder="输入你的专属激活码"
+                />
+                <button className="primary-button" type="submit">
+                  兑换
+                </button>
+              </div>
+              <p>激活属于你的专属陪伴契约。</p>
+            </form>
+          )}
         </section>
 
         <nav className="bottom-nav" aria-label="主导航">

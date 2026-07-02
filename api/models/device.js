@@ -42,6 +42,7 @@ export async function updateDevice(userId, id, input) {
     ...current,
     device_name: input.device_name === undefined ? current.device_name : normalizeName(input.device_name),
     device_type: input.device_type === undefined ? current.device_type : String(input.device_type || "").trim(),
+    status: input.status === undefined ? current.status : String(input.status || "off"),
     location: input.location === undefined ? current.location : String(input.location || "").trim(),
     external_device_id:
       input.external_device_id === undefined
