@@ -101,7 +101,7 @@ button {
 
 .model-stage {
   display: none;
-  min-height: 548px;
+  min-height: 590px;
   margin: -38px -18px -30px;
   padding: 0;
   border-radius: 0 0 34px 34px;
@@ -157,6 +157,27 @@ button {
   object-fit: cover;
   object-position: center top;
   filter: contrast(1.04) saturate(0.98) brightness(0.98);
+  transition: transform 220ms ease, filter 220ms ease, object-position 220ms ease;
+  will-change: transform;
+}
+
+.model-stage.appearance-butler img {
+  object-position: 58% top;
+}
+
+.model-stage.model-warm img {
+  transform: scale(1.018) translateX(-0.8%);
+  filter: contrast(1.03) saturate(1.02) brightness(1.01);
+}
+
+.model-stage.model-concern img {
+  transform: scale(1.035) translateY(0.8%);
+  filter: contrast(1) saturate(0.96) brightness(1.02);
+}
+
+.model-stage.model-guard img {
+  transform: scale(1.025) translateX(1%);
+  filter: contrast(1.08) saturate(0.94) brightness(0.96);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1516,6 +1537,7 @@ button {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 9px;
+  margin-bottom: 16px;
 }
 
 .preference-option {
@@ -1545,6 +1567,64 @@ button {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.35;
+}
+
+.appearance-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.appearance-option {
+  min-height: 96px;
+  padding: 9px;
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  gap: 4px 9px;
+  align-items: center;
+  text-align: left;
+  border-radius: 18px;
+  border: 1px solid rgba(121, 79, 111, 0.12);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink);
+}
+
+.appearance-option.active {
+  border-color: rgba(122, 103, 163, 0.44);
+  background: linear-gradient(145deg, rgba(244, 239, 255, 0.94), rgba(255, 248, 244, 0.9));
+  box-shadow: 0 14px 30px rgba(94, 75, 116, 0.11);
+}
+
+.appearance-option img,
+.appearance-auto {
+  width: 54px;
+  height: 72px;
+  grid-row: span 2;
+  border-radius: 14px;
+  object-fit: cover;
+  object-position: center top;
+  background: #ede7ef;
+}
+
+.appearance-auto {
+  display: grid;
+  place-items: center;
+  color: #7863a5;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.appearance-option span {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.appearance-option small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.3;
 }
 
 .notification-list {
@@ -2283,6 +2363,12 @@ button {
     font-size: 11px;
   }
 
+  .model-stage {
+    min-height: 560px;
+    margin-left: -12px;
+    margin-right: -12px;
+  }
+
   .today-panel {
     padding: 11px 11px 12px;
   }
@@ -2328,6 +2414,10 @@ button {
     min-height: 96px;
     padding-left: 5px;
     padding-right: 5px;
+  }
+
+  .appearance-grid {
+    grid-template-columns: 1fr;
   }
 }
 

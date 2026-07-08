@@ -85,6 +85,7 @@ const storageKeys = {
   preferences: "ai-companion.preferences",
   notifiedTasks: "ai-companion.notifiedTasks",
   modelTone: "ai-companion.modelTone",
+  appearance: "ai-companion.appearance",
   activation: "ai-companion.activation",
   userProfile: "ai-companion.userProfile",
   freeMessagesSent: "ai-companion.freeMessagesSent",
@@ -123,6 +124,14 @@ const modelStates = {
     label: "克制地护着你",
   },
 };
+
+const appearanceOptions = [
+  { key: "butler", label: "智能管家", note: "全身 · 现代家居", src: "/assets/smart-butler-xiaxiaoyin.png" },
+  { key: "auto", label: "随对话切换", note: "按回复切换表情与姿态" },
+  { key: "moon", label: "月夜贵族", note: "克制 · 白色礼服", src: "/assets/model-noble-hero.png" },
+  { key: "warm", label: "温柔近景", note: "柔和 · 陪伴感", src: "/assets/model-noble-warm.png" },
+  { key: "guard", label: "守护状态", note: "冷静 · 安全感", src: "/assets/model-noble-guard.png" },
+];
 
 const quickActions = [
   { key: "voice", label: "想听你的声音", text: "想听你的声音", type: "message", icon: Phone },
@@ -300,6 +309,7 @@ export function App() {
   const [preferences, setPreferences] = useState(() => loadStoredValue(storageKeys.preferences, ["gentle"]));
   const [notifiedTaskKeys, setNotifiedTaskKeys] = useState(() => loadStoredValue(storageKeys.notifiedTasks, []));
   const [modelTone, setModelTone] = useState(() => loadStoredValue(storageKeys.modelTone, "calm"));
+  const [appearance, setAppearance] = useState(() => loadStoredValue(storageKeys.appearance, "butler"));
   const [activation, setActivation] = useState(() => loadStoredValue(storageKeys.activation, null));
   const [userProfile, setUserProfile] = useState(() => loadStoredValue(storageKeys.userProfile, null));
   const [freeMessagesSent, setFreeMessagesSent] = useState(() => loadStoredValue(storageKeys.freeMessagesSent, 0));
@@ -328,6 +338,8 @@ export function App() {
   const unreadCount = notifications.filter((item) => !item.read).length;
   const pageClass = `tab-${activeTab} ${isRestrictedTab ? "is-restricted" : ""}`;
   const modelState = modelStates[modelTone] || modelStates.calm;
+  const appearanceState = appearanceOptions.find((item) => item.key === appearance) || appearanceOptions[0];
+  const displayModelSrc = appearanceState.src || modelState.src;
   const taskTime = splitTaskTime(newTaskTime);
 
   useEffect(() => {
@@ -353,6 +365,10 @@ export function App() {
   useEffect(() => {
     localStorage.setItem(storageKeys.modelTone, JSON.stringify(modelTone));
   }, [modelTone]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKeys.appearance, JSON.stringify(appearance));
+  }, [appearance]);
 
   useEffect(() => {
     if (activation) {
@@ -731,6 +747,7 @@ export function App() {
       } else if (isActivated) {
         await fetchDevices();
       }
+      setModelTone(inferModelTone(data.reply, mood));
       await typeAssistantReply(data.reply);
       if (!isActivated) setFreeMessagesSent((count) => count + 1);
     } catch (error) {
@@ -795,8 +812,11 @@ export function App() {
           </div>
         </header>
 
-        <section className={`model-stage model-${modelState.tone}`} aria-label={`模型状态：${modelState.label}`}>
-          <img src={modelState.src} alt={`${companionName} 模型半身：${modelState.label}`} />
+        <section
+          className={`model-stage model-${modelState.tone} appearance-${appearanceState.key}`}
+          aria-label={`模型状态：${modelState.label}`}
+        >
+          <img src={displayModelSrc} alt={`${companionName} 模型：${modelState.label}`} />
         </section>
 
         <section className="today-panel" aria-labelledby="today-title">
@@ -1205,6 +1225,21 @@ export function App() {
                     type="button"
                     onClick={() => togglePreference(option.key)}
                   >
+                    <span>{option.label}</span>
+                    <small>{option.note}</small>
+                  </button>
+                ))}
+              </div>
+              <h3>首页形象</h3>
+              <div className="appearance-grid">
+                {appearanceOptions.map((option) => (
+                  <button
+                    className={appearance === option.key ? "appearance-option active" : "appearance-option"}
+                    key={option.key}
+                    type="button"
+                    onClick={() => setAppearance(option.key)}
+                  >
+                    {option.src ? <img src={option.src} alt="" /> : <span className="appearance-auto">AI</span>}
                     <span>{option.label}</span>
                     <small>{option.note}</small>
                   </button>

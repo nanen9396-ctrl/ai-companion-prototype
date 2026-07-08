@@ -11,15 +11,49 @@ function canUseWebGL() {
   }
 }
 
+function makeTexture(draw) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 1024;
+  const context = canvas.getContext("2d");
+  draw(context, canvas);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
+}
+
+function curvePlane(width, height, widthSegments, heightSegments, depth = 0.16) {
+  const geometry = new THREE.PlaneGeometry(width, height, widthSegments, heightSegments);
+  const positions = geometry.attributes.position;
+  for (let index = 0; index < positions.count; index += 1) {
+    const x = positions.getX(index) / (width * 0.5);
+    const y = positions.getY(index) / (height * 0.5);
+    const edgeFalloff = Math.pow(Math.abs(x), 1.8) * depth;
+    const chestLift = Math.max(0, 1 - Math.abs(y + 0.28) * 1.7) * 0.045;
+    positions.setZ(index, -edgeFalloff + chestLift);
+  }
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function fitPortrait(mesh, texture, viewportAspect) {
+  const imageAspect = texture.image.width / texture.image.height;
+  const isMobile = viewportAspect < 0.72;
+  const height = isMobile ? 5.35 : 4.95;
+  mesh.scale.set(height * imageAspect, height, 1);
+  mesh.position.set(isMobile ? 0.02 : 0.2, isMobile ? -0.25 : -0.18, -0.06);
+}
+
 if (!mount || !canUseWebGL()) {
   document.body.classList.add("no-webgl");
 } else {
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x11101a, 8, 18);
+  scene.fog = new THREE.Fog(0x10101a, 8, 18);
 
-  const camera = new THREE.PerspectiveCamera(36, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(0, 1.2, 7.4);
-  camera.lookAt(0, -0.15, 0);
+  const camera = new THREE.PerspectiveCamera(31, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(0, 0.25, 7.25);
+  camera.lookAt(0.04, -0.05, 0);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -28,80 +62,180 @@ if (!mount || !canUseWebGL()) {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   mount.appendChild(renderer.domElement);
 
-  const skin = new THREE.MeshStandardMaterial({ color: 0xf1d8cf, roughness: 0.62 });
-  const hair = new THREE.MeshStandardMaterial({ color: 0xf2f4ff, roughness: 0.52, metalness: 0.06 });
-  const suit = new THREE.MeshStandardMaterial({ color: 0x252033, roughness: 0.5, metalness: 0.16 });
-  const cape = new THREE.MeshStandardMaterial({ color: 0x151521, roughness: 0.5, metalness: 0.12, side: THREE.DoubleSide });
-  const violet = new THREE.MeshStandardMaterial({ color: 0x725a9f, roughness: 0.45, metalness: 0.22 });
-  const gold = new THREE.MeshStandardMaterial({ color: 0xd7a24f, roughness: 0.36, metalness: 0.64 });
-  const ink = new THREE.MeshStandardMaterial({ color: 0x1b1826, roughness: 0.38, metalness: 0.18 });
+  const stage = new THREE.Group();
+  scene.add(stage);
 
-  const figure = new THREE.Group();
-  figure.position.y = -0.25;
-  scene.add(figure);
+  const backdropTexture = makeTexture((ctx, canvas) => {
+    const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    bg.addColorStop(0, "#19162a");
+    bg.addColorStop(0.48, "#0f1019");
+    bg.addColorStop(1, "#15121c");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  function add(geometry, material, position, scale = [1, 1, 1], rotation = [0, 0, 0], parent = figure) {
-    const item = new THREE.Mesh(geometry, material);
-    item.position.set(...position);
-    item.scale.set(...scale);
-    item.rotation.set(...rotation);
-    parent.add(item);
-    return item;
-  }
+    const violet = ctx.createRadialGradient(680, 190, 40, 680, 190, 420);
+    violet.addColorStop(0, "rgba(196,181,255,.46)");
+    violet.addColorStop(1, "rgba(196,181,255,0)");
+    ctx.fillStyle = violet;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  add(new THREE.CapsuleGeometry(0.62, 1.7, 12, 28), suit, [0, -0.78, 0], [0.9, 1, 0.58]);
-  add(new THREE.ConeGeometry(1.7, 2.8, 5), cape, [0, -1.18, 0.28], [1, 1, 0.26], [0.12, 0, Math.PI]);
-  add(new THREE.SphereGeometry(0.54, 36, 24), skin, [0, 0.72, 0.05], [0.95, 1.05, 0.9]);
-  add(new THREE.SphereGeometry(0.64, 32, 18), hair, [0, 1.0, 0], [1.08, 0.62, 1.0]);
-  add(new THREE.ConeGeometry(0.14, 0.84, 10), hair, [-0.5, 0.67, 0.1], [1, 1, 0.72], [0.38, 0, 0.42]);
-  add(new THREE.ConeGeometry(0.14, 0.78, 10), hair, [0.44, 0.68, 0.1], [1, 1, 0.72], [0.38, 0, -0.36]);
-  add(new THREE.BoxGeometry(0.13, 0.036, 0.034), ink, [-0.18, 0.72, 0.52]);
-  add(new THREE.BoxGeometry(0.13, 0.036, 0.034), ink, [0.18, 0.72, 0.52]);
-  add(new THREE.TorusGeometry(0.15, 0.012, 8, 24), gold, [0, 0.5, 0.54], [1, 0.28, 1]);
-  add(new THREE.CapsuleGeometry(0.13, 1.16, 8, 18), suit, [-0.68, -0.52, 0.02], [0.88, 1, 0.88], [0.18, 0, 0.34]);
-  add(new THREE.CapsuleGeometry(0.13, 1.16, 8, 18), suit, [0.68, -0.52, 0.02], [0.88, 1, 0.88], [0.18, 0, -0.34]);
-  add(new THREE.BoxGeometry(1.12, 0.075, 0.07), gold, [0, 0.08, 0.52]);
-  add(new THREE.SphereGeometry(0.12, 18, 12), violet, [0, -0.04, 0.58]);
-
-  const crown = new THREE.Group();
-  crown.position.set(0, 1.46, 0.04);
-  figure.add(crown);
-  add(new THREE.TorusGeometry(0.36, 0.018, 8, 42), gold, [0, 0, 0], [1, 0.18, 1], [0, 0, 0], crown);
-  [-0.2, 0, 0.2].forEach((x, index) => {
-    add(new THREE.ConeGeometry(0.045, index === 1 ? 0.26 : 0.2, 8), gold, [x, 0.1, 0], [1, 1, 1], [0, 0, 0], crown);
+    const gold = ctx.createRadialGradient(220, 770, 40, 220, 770, 360);
+    gold.addColorStop(0, "rgba(216,171,93,.22)");
+    gold.addColorStop(1, "rgba(216,171,93,0)");
+    ctx.fillStyle = gold;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
   });
 
-  const floor = new THREE.Mesh(
-    new THREE.CircleGeometry(3.8, 80),
-    new THREE.MeshStandardMaterial({ color: 0x1b1728, roughness: 0.82, metalness: 0.08 }),
+  const backdrop = new THREE.Mesh(
+    new THREE.PlaneGeometry(10.5, 6.8, 1, 1),
+    new THREE.MeshBasicMaterial({ map: backdropTexture }),
   );
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.y = -2.18;
-  scene.add(floor);
+  backdrop.position.set(0, 0, -1.45);
+  stage.add(backdrop);
 
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(2.15, 0.012, 8, 160), gold);
-  ring.position.y = -2.08;
-  ring.rotation.x = Math.PI / 2;
-  ring.material.opacity = 0.56;
-  ring.material.transparent = true;
-  scene.add(ring);
+  const portraitGroup = new THREE.Group();
+  portraitGroup.rotation.y = -0.08;
+  stage.add(portraitGroup);
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x251d35, 1.7));
-  const key = new THREE.DirectionalLight(0xffffff, 2.8);
-  key.position.set(3, 5, 4);
-  scene.add(key);
-  const rim = new THREE.PointLight(0x9d82ff, 22, 8);
-  rim.position.set(-2.6, 1.8, 3.2);
-  scene.add(rim);
+  const portraitMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+  });
+  const portrait = new THREE.Mesh(curvePlane(1, 1, 52, 92, 0.12), portraitMaterial);
+  portraitGroup.add(portrait);
 
-  let targetY = 0;
+  const softShadow = new THREE.Mesh(
+    curvePlane(1, 1, 32, 50, 0.18),
+    new THREE.MeshBasicMaterial({
+      color: 0x14111d,
+      transparent: true,
+      opacity: 0.36,
+      depthWrite: false,
+    }),
+  );
+  softShadow.position.set(0.12, -0.1, -0.22);
+  softShadow.scale.set(1.08, 1.04, 1);
+  portraitGroup.add(softShadow);
+
+  const loader = new THREE.TextureLoader();
+  loader.load("/assets/model-noble-hero.png", (texture) => {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 16;
+    portraitMaterial.map = texture;
+    portraitMaterial.needsUpdate = true;
+    fitPortrait(portrait, texture, camera.aspect);
+    fitPortrait(softShadow, texture, camera.aspect);
+    softShadow.scale.multiplyScalar(1.06);
+  });
+
+  const halo = new THREE.Group();
+  halo.position.set(0.22, 0.28, -0.48);
+  stage.add(halo);
+  const haloMaterial = new THREE.MeshBasicMaterial({
+    color: 0xbca8ff,
+    transparent: true,
+    opacity: 0.22,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  const haloRing = new THREE.Mesh(new THREE.TorusGeometry(1.32, 0.01, 8, 180), haloMaterial);
+  haloRing.scale.set(1.16, 0.82, 1);
+  halo.add(haloRing);
+  const haloGlow = new THREE.Mesh(
+    new THREE.CircleGeometry(1.45, 120),
+    new THREE.MeshBasicMaterial({
+      color: 0x7d70c8,
+      transparent: true,
+      opacity: 0.075,
+      depthWrite: false,
+    }),
+  );
+  haloGlow.scale.set(1.18, 0.82, 1);
+  halo.add(haloGlow);
+
+  const goldMaterial = new THREE.MeshBasicMaterial({
+    color: 0xe6c47c,
+    transparent: true,
+    opacity: 0.86,
+    depthWrite: false,
+  });
+  const whiteGlint = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.62,
+    depthWrite: false,
+  });
+
+  function strand(points, radius, material, parent = portraitGroup) {
+    const curve = new THREE.CatmullRomCurve3(points.map(([x, y, z]) => new THREE.Vector3(x, y, z)));
+    const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 40, radius, 8, false), material);
+    parent.add(mesh);
+    return mesh;
+  }
+
+  const hairGlints = new THREE.Group();
+  portraitGroup.add(hairGlints);
+  [
+    [[-0.48, 1.4, 0.1], [-0.24, 1.05, 0.22], [-0.12, 0.74, 0.18]],
+    [[-0.16, 1.46, 0.12], [0.04, 1.08, 0.25], [0.02, 0.82, 0.2]],
+    [[0.22, 1.42, 0.08], [0.36, 1.02, 0.2], [0.28, 0.68, 0.16]],
+    [[0.54, 1.1, 0.04], [0.58, 0.7, 0.12], [0.44, 0.34, 0.08]],
+  ].forEach((points, index) => {
+    const glint = strand(points, index === 1 ? 0.008 : 0.006, whiteGlint, hairGlints);
+    glint.userData.phase = index * 0.8;
+  });
+
+  const ornaments = new THREE.Group();
+  ornaments.position.set(0.28, -1.08, 0.18);
+  portraitGroup.add(ornaments);
+  const jewel = new THREE.Mesh(new THREE.OctahedronGeometry(0.09, 1), new THREE.MeshBasicMaterial({ color: 0x8c7dff }));
+  ornaments.add(jewel);
+  const jewelRing = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.009, 8, 64), goldMaterial);
+  jewelRing.rotation.z = 0.18;
+  ornaments.add(jewelRing);
+  strand([[-0.24, 0.18, 0], [0, 0.04, 0.04], [0.26, 0.18, 0]], 0.008, goldMaterial, ornaments);
+  strand([[0, -0.16, 0], [0.08, -0.42, 0.03], [0.02, -0.7, 0]], 0.006, goldMaterial, ornaments);
+
+  const cape = new THREE.Mesh(
+    new THREE.PlaneGeometry(4.8, 4.3, 24, 24),
+    new THREE.MeshBasicMaterial({
+      color: 0x171421,
+      transparent: true,
+      opacity: 0.5,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+  );
+  cape.position.set(-0.08, -1.18, -0.32);
+  cape.rotation.z = -0.04;
+  portraitGroup.add(cape);
+
+  const particles = new THREE.Group();
+  stage.add(particles);
+  const particleMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffefd1,
+    transparent: true,
+    opacity: 0.68,
+    depthWrite: false,
+  });
+  for (let index = 0; index < 42; index += 1) {
+    const angle = (index / 42) * Math.PI * 2;
+    const radius = 1.5 + (index % 7) * 0.16;
+    const star = new THREE.Mesh(new THREE.SphereGeometry(0.012 + (index % 4) * 0.003, 8, 8), particleMaterial);
+    star.position.set(Math.cos(angle) * radius, -1.45 + ((index * 37) % 100) / 28, -0.62 + Math.sin(angle) * 0.42);
+    star.userData.phase = index * 0.37;
+    particles.add(star);
+  }
+
+  let targetY = -0.03;
   let dragStart = null;
   window.addEventListener("pointerdown", (event) => {
     dragStart = event.clientX;
   });
   window.addEventListener("pointermove", (event) => {
     if (dragStart === null) return;
-    targetY += (event.clientX - dragStart) * 0.006;
+    targetY += (event.clientX - dragStart) * 0.0028;
+    targetY = Math.max(-0.32, Math.min(0.32, targetY));
     dragStart = event.clientX;
   });
   window.addEventListener("pointerup", () => {
@@ -112,15 +246,29 @@ if (!mount || !canUseWebGL()) {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    if (portraitMaterial.map) {
+      fitPortrait(portrait, portraitMaterial.map, camera.aspect);
+      fitPortrait(softShadow, portraitMaterial.map, camera.aspect);
+      softShadow.scale.multiplyScalar(1.06);
+    }
   }
   window.addEventListener("resize", resize);
 
   function animate(time = 0) {
-    figure.rotation.y += (targetY - figure.rotation.y) * 0.08;
-    figure.position.y = -0.25 + Math.sin(time * 0.0012) * 0.04;
-    crown.rotation.y = Math.sin(time * 0.001) * 0.12;
+    const seconds = time * 0.001;
+    portraitGroup.rotation.y += (targetY - portraitGroup.rotation.y) * 0.06;
+    portraitGroup.position.y = Math.sin(seconds * 1.1) * 0.018;
+    halo.rotation.z = seconds * 0.035;
+    jewel.rotation.z = seconds * 0.8;
+    hairGlints.children.forEach((glint) => {
+      glint.material.opacity = 0.45 + Math.sin(seconds * 1.4 + glint.userData.phase) * 0.18;
+    });
+    particles.children.forEach((star) => {
+      star.position.y += Math.sin(seconds + star.userData.phase) * 0.0008;
+    });
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   }
+
   animate();
 }
