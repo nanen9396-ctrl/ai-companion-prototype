@@ -92,10 +92,21 @@ async function fetchJson(url, options) {
 }
 
 function qweatherHost() {
-  return String(process.env.QWEATHER_API_HOST || "")
+  const rawHost = String(process.env.QWEATHER_API_HOST || "")
     .trim()
-    .replace(/^https?:\/\//, "")
-    .replace(/\/+$/, "");
+    .replace(/^(["'])(.*)\1$/, "$2");
+  if (!rawHost) return "";
+
+  try {
+    return new URL(/^https?:\/\//i.test(rawHost) ? rawHost : `https://${rawHost}`).host;
+  } catch {
+    return "";
+  }
+}
+
+function qweatherConnectionError(apiHost, error) {
+  const code = error?.cause?.code || error?.code || error?.name || "网络错误";
+  return `和风天气连接失败：QWEATHER_API_HOST “${apiHost}” 无法连接（${code}）。请在和风天气控制台的“设置 > API Host”复制专属域名后重新部署。`;
 }
 
 async function getWeather(location) {
@@ -112,18 +123,20 @@ async function getWeather(location) {
     `https://${apiHost}/geo/v2/city/lookup?location=${encodeURIComponent(place)}&lang=zh`,
     options,
   );
+  if (geo.error) return qweatherConnectionError(apiHost, geo.error);
   const city = geo.data?.location?.[0];
   if (!geo.ok || geo.data?.code !== "200" || !city) {
-    return `和风天气无法识别“${place}”（城市查询错误码：${geo.data?.code || "网络错误"}）。`;
+    return `和风天气无法识别“${place}”（城市查询错误码：${geo.data?.code || "未知错误"}）。`;
   }
 
   const weather = await fetchJson(
     `https://${apiHost}/v7/weather/now?location=${city.id}&lang=zh`,
     options,
   );
+  if (weather.error) return qweatherConnectionError(apiHost, weather.error);
   const now = weather.data?.now;
   if (!weather.ok || weather.data?.code !== "200" || !now) {
-    return `和风天气暂时没有返回${city.name || place}的实况（错误码：${weather.data?.code || "网络错误"}）。`;
+    return `和风天气暂时没有返回${city.name || place}的实况（错误码：${weather.data?.code || "未知错误"}）。`;
   }
   return `${city.name}现在${now.text}，气温 ${now.temp}°C，体感 ${now.feelsLike}°C，风速 ${now.windSpeed} km/h。`;
 }

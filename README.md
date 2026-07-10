@@ -36,7 +36,7 @@ Recommended setup:
    - `DEEPSEEK_API_KEY`: your DeepSeek API key
    - `DEEPSEEK_MODEL`: optional, defaults to `deepseek-v4-flash`
    - `QWEATHER_API_KEY`: the API Key created in the QWeather Console
-   - `QWEATHER_API_HOST`: the project-specific API Host from QWeather Console Settings, e.g. `abcxyz.qweatherapi.com`
+   - `QWEATHER_API_HOST`: the project-specific API Host from QWeather Console Settings, e.g. `abcxyz.def.qweatherapi.com`. A copied full `https://.../` URL also works, but do not use `devapi.qweather.com` or a documentation placeholder.
    - `ACTIVATION_CODES`: comma-separated activation codes
    - `AI_COMPANION_STORE_PATH`: optional local JSON-store path for prototype data
 5. Every future code update pushed to GitHub will update the same Vercel project link.
