@@ -85,7 +85,7 @@ async function fetchJson(url, options) {
   try {
     const response = await fetch(url, options);
     const data = await response.json().catch(() => ({}));
-    return { ok: response.ok, data };
+    return { ok: response.ok, status: response.status, data };
   } catch (error) {
     return { ok: false, data: {}, error };
   }
@@ -109,6 +109,10 @@ function qweatherConnectionError(apiHost, error) {
   return `和风天气连接失败：QWEATHER_API_HOST “${apiHost}” 无法连接（${code}）。请在和风天气控制台的“设置 > API Host”复制专属域名后重新部署。`;
 }
 
+function qweatherInvalidResponseError(stage, result) {
+  return `和风天气${stage}接口返回 HTTP ${result.status || "未知"}，未收到有效 JSON 数据。请检查 QWEATHER_API_HOST 是否为控制台“设置 > API Host”中的专属域名，并确认 API Key 属于同一项目。`;
+}
+
 async function getWeather(location) {
   const place = String(location || "").trim();
   if (!place) return "还没有你的地理位置。你可以先在激活资料里填写城市。";
@@ -126,6 +130,7 @@ async function getWeather(location) {
   if (geo.error) return qweatherConnectionError(apiHost, geo.error);
   const city = geo.data?.location?.[0];
   if (!geo.ok || geo.data?.code !== "200" || !city) {
+    if (!geo.data?.code) return qweatherInvalidResponseError("城市查询", geo);
     return `和风天气无法识别“${place}”（城市查询错误码：${geo.data?.code || "未知错误"}）。`;
   }
 
@@ -136,6 +141,7 @@ async function getWeather(location) {
   if (weather.error) return qweatherConnectionError(apiHost, weather.error);
   const now = weather.data?.now;
   if (!weather.ok || weather.data?.code !== "200" || !now) {
+    if (!weather.data?.code) return qweatherInvalidResponseError("实况天气", weather);
     return `和风天气暂时没有返回${city.name || place}的实况（错误码：${weather.data?.code || "未知错误"}）。`;
   }
   return `${city.name}现在${now.text}，气温 ${now.temp}°C，体感 ${now.feelsLike}°C，风速 ${now.windSpeed} km/h。`;
