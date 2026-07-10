@@ -81,78 +81,51 @@ function devicesPrompt(devices) {
   return `用户已添加的智能家居设备：\n${lines.join("\n")}\n如果用户没说完整设备名，但意图明显，请优先匹配这些设备；例如只有一个灯类设备时，“开灯”应调用该灯的设备名。`;
 }
 
-async function fetchJson(url) {
+async function fetchJson(url, options) {
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, options);
     const data = await response.json().catch(() => ({}));
     return { ok: response.ok, data };
-  } catch {
-    return { ok: false, data: {} };
+  } catch (error) {
+    return { ok: false, data: {}, error };
   }
 }
 
-async function queryWeatherApi(provider, key, place) {
-  if (provider === "qweather") {
-    const geoUrl = `https://geoapi.qweather.com/v2/city/lookup?location=${encodeURIComponent(place)}&key=${key}`;
-    const geo = await fetchJson(geoUrl);
-    const city = geo.data?.location?.[0];
-    if (!geo.ok || !city) return null;
-    const weatherUrl = `https://devapi.qweather.com/v7/weather/now?location=${city.id}&key=${key}`;
-    const weather = await fetchJson(weatherUrl);
-    const now = weather.data?.now;
-    if (!weather.ok || !now) return null;
-    return `${city.name}现在${now.text}，气温 ${now.temp}°C，体感 ${now.feelsLike}°C，风速 ${now.windSpeed} km/h。`;
-  }
-
-  if (provider === "openweather") {
-    const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(place)}&limit=1&appid=${key}`;
-    const geo = await fetchJson(geoUrl);
-    const city = geo.data?.[0];
-    if (!geo.ok || !city) return null;
-    const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${city.lat}&lon=${city.lon}&appid=${key}&units=metric&lang=zh_cn`;
-    const weather = await fetchJson(weatherUrl);
-    const main = weather.data?.main;
-    if (!weather.ok || !main) return null;
-    return `${city.local_names?.zh || city.name}现在${weather.data.weather?.[0]?.description || "天气变化中"}，气温 ${main.temp}°C，体感 ${main.feels_like}°C，风速 ${weather.data.wind?.speed ?? "未知"} m/s。`;
-  }
-
-  const weatherUrl = `https://api.weatherapi.com/v1/current.json?key=${key}&q=${encodeURIComponent(place)}&lang=zh`;
-  const weather = await fetchJson(weatherUrl);
-  const current = weather.data?.current;
-  if (!weather.ok || !current) return null;
-  return `${weather.data.location?.name || place}现在${current.condition?.text || "天气变化中"}，气温 ${current.temp_c}°C，体感 ${current.feelslike_c}°C，风速 ${current.wind_kph} km/h。`;
+function qweatherHost() {
+  return String(process.env.QWEATHER_API_HOST || "")
+    .trim()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/+$/, "");
 }
 
 async function getWeather(location) {
   const place = String(location || "").trim();
   if (!place) return "还没有你的地理位置。你可以先在激活资料里填写城市。";
 
-  const provider = String(process.env.WEATHER_API_PROVIDER || "").toLowerCase();
-  const weatherApiKey = process.env.WEATHER_API_KEY || process.env.WEATHERAPI_KEY;
-  const qweatherKey = process.env.QWEATHER_API_KEY;
-  const openWeatherKey = process.env.OPENWEATHER_API_KEY;
-  const attempts = [];
+  const apiKey = process.env.QWEATHER_API_KEY || process.env.WEATHER_API_KEY;
+  const apiHost = qweatherHost();
+  if (!apiKey) return "还没有配置和风天气 API Key。请在 Vercel 设置 QWEATHER_API_KEY。";
+  if (!apiHost) return "还没有配置和风天气 API Host。请在 Vercel 设置 QWEATHER_API_HOST。";
 
-  if (provider === "qweather") attempts.push(["qweather", qweatherKey || weatherApiKey]);
-  else if (provider === "openweather") attempts.push(["openweather", openWeatherKey || weatherApiKey]);
-  else if (provider === "weatherapi") attempts.push(["weatherapi", weatherApiKey]);
-  else {
-    if (qweatherKey) attempts.push(["qweather", qweatherKey]);
-    if (openWeatherKey) attempts.push(["openweather", openWeatherKey]);
-    if (weatherApiKey) {
-      attempts.push(["weatherapi", weatherApiKey], ["qweather", weatherApiKey], ["openweather", weatherApiKey]);
-    }
+  const options = { headers: { "X-QW-Api-Key": apiKey } };
+  const geo = await fetchJson(
+    `https://${apiHost}/geo/v2/city/lookup?location=${encodeURIComponent(place)}&lang=zh`,
+    options,
+  );
+  const city = geo.data?.location?.[0];
+  if (!geo.ok || geo.data?.code !== "200" || !city) {
+    return `和风天气无法识别“${place}”（城市查询错误码：${geo.data?.code || "网络错误"}）。`;
   }
 
-  const usableAttempts = attempts.filter(([, key]) => key);
-  if (!usableAttempts.length) return "天气 API Key 还没有配置。请在 Vercel 环境变量里设置 WEATHER_API_KEY。";
-
-  for (const [name, key] of usableAttempts) {
-    const result = await queryWeatherApi(name, key, place);
-    if (result) return result;
+  const weather = await fetchJson(
+    `https://${apiHost}/v7/weather/now?location=${city.id}&lang=zh`,
+    options,
+  );
+  const now = weather.data?.now;
+  if (!weather.ok || weather.data?.code !== "200" || !now) {
+    return `和风天气暂时没有返回${city.name || place}的实况（错误码：${weather.data?.code || "网络错误"}）。`;
   }
-
-  return `我已经调用天气接口查询 ${place}，但当前 API 没有返回可用实时天气。请检查 Vercel 的 WEATHER_API_KEY 和 WEATHER_API_PROVIDER 是否对应。`;
+  return `${city.name}现在${now.text}，气温 ${now.temp}°C，体感 ${now.feelsLike}°C，风速 ${now.windSpeed} km/h。`;
 }
 
 async function callDeepSeek(apiKey, payload) {
@@ -350,11 +323,13 @@ export default async function handler(req, res) {
       const toolResultMessages = [];
       let devicesChanged = false;
       let responseDevices = currentDevices;
+      let weatherError = "";
 
       for (const toolCall of toolCalls) {
         const name = toolCall.function?.name || toolCall.name;
         const args = parseToolArgs(toolCall.function?.arguments || toolCall.arguments);
         const result = await runToolCall(toolCall, userId, profile, responseDevices);
+        if (name === "get_weather" && /^(还没有|和风天气)/.test(String(result))) weatherError = String(result);
         if (name === "control_device") {
           devicesChanged = true;
           const localResult = applyDeviceControlToList(responseDevices, args.device_name, args.action);
@@ -365,6 +340,8 @@ export default async function handler(req, res) {
           content: `${name} 工具返回：${String(result)}\n你必须只基于这个工具结果回复，不得补充未查询到的实时信息或假装执行其它操作。`,
         });
       }
+
+      if (weatherError) return { reply: weatherError };
 
       const finalData = await callDeepSeek(apiKey, {
         messages: [
