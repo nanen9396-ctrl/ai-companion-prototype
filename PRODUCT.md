@@ -1,7 +1,26 @@
-# Prototype Instructions
+# Product
 
-Run the local server yourself and open the preview in the in-app browser. Do not give the user server-start instructions when you can run it.
+## Register
 
-Before making substantial visual changes, use the Product Design plugin's `get-context` skill when the visual source is unclear or no longer matches the current goal. When the user gives durable prototype-specific design feedback, preferences, or decisions, record them in `AGENTS.md`.
+product
 
-When implementing from a selected generated mock, treat that image as the source of truth for layout, component anatomy, density, spacing, color, typography, visible content, and hierarchy.
+## Users
+女性向乙游用户，希望在手机里获得有关系感、记忆感和生活协助能力的 AI 陪伴。
+
+## Product Purpose
+提供可持续对话、长期记忆、仪式感陪伴与轻量生活助手能力。成功状态是用户打开应用后能自然接着上次的话题继续聊，并感到角色稳定、温柔、可信。
+
+## Brand Personality
+温柔、高级、专属、克制。
+
+## Anti-references
+避免像普通工具型语音助手、拥挤的信息面板、营销落地页、过度玻璃拟态、密集说明文字、与既有乙游 IP 可识别相似的角色表达。
+
+## Design Principles
+- 人物是首页主视觉，文字只服务情绪和操作。
+- 对话优先，功能入口收进轻量工具菜单。
+- 记忆需要及时但克制，只记录主要点。
+- 安全、隐私和 AI 身份要明确，但不抢陪伴体验。
+
+## Accessibility & Inclusion
+保持清晰对比、可点击尺寸、可读字号；动画只用于状态反馈，不依赖颜色传达唯一含义。

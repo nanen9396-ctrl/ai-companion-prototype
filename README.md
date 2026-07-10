@@ -1,45 +1,62 @@
-**Visual QA Report**
+# AI Companion Prototype
 
-source visual truth path: `C:\Users\南派大星\Documents\Codex\2026-06-29\wo\outputs\ai-companion-prototype\public\assets\reference-direction-style3.png`
-implementation screenshot path: `C:\Users\南派大星\Documents\Codex\2026-06-29\wo\outputs\ai-companion-prototype\qa\prototype-home-premium-top-v2.png`
-additional screenshots: `prototype-final-record-add-delete.png`, `prototype-final-me-code.png`, `prototype-smart.png`, `prototype-record-memory.png`
-viewport: `390 x 1200`
-state: premium immersive home top with dynamic half-body model, record schedule add/delete, record memory, smart manager, personal center activation code
+Mobile-first prototype for an otome-oriented AI companion and smart life assistant.
 
-**Findings**
-- No actionable P0, P1, or P2 issues remain.
+## Local Preview
 
-**Required Fidelity Surfaces**
-- Fonts and typography: readable Chinese UI scale, strong section hierarchy, no clipped button text in the final capture.
-- Spacing and layout rhythm: home opens directly into the chat surface with the composer immediately below; record, smart-manager, and profile modules are moved to bottom-tab pages.
-- Colors and visual tokens: dusk rose, warm cream, deep plum text, purple active state, and amber safety accents match the updated style 3 direction.
-- Image quality and asset fidelity: original generated companion portrait is placed as a real image asset, not recreated with CSS or placeholder shapes.
-- Copy and content: AI disclosure, relationship status, memory, schedule, smart-home scenes, and safety confirmation are present and aligned with the MVP plan.
+```bash
+pnpm install
+pnpm run dev
+```
 
-**Patches Made Since First QA**
-- Removed horizontal clipping by switching the mobile prototype to a stable single-column layout.
-- Locked the prototype canvas to a 390px mobile app width and aligned it to the left for reliable headless-browser captures.
-- Tightened mood, schedule, memory, and smart-home modules so text stays readable at mobile width.
-- Restyled from the original smart-home command-center direction to the style 3 immersive ritual direction without changing interaction behavior.
-- Reworked navigation to four tabs: Home, Record, Smart Manager, Me.
-- Moved mood check-in into the chat stream as recurring mid-day/afternoon prompts.
-- Added personal-center activation-code redemption UI for future one-to-one sales flow.
-- Added three generated half-body model assets and a simple state switcher driven by recent chat text, draft text, and selected mood.
-- Added schedule creation and deletion controls to the Record > Today Schedule view.
-- Replaced the activation-code explanatory sentence with the shorter product phrase: "激活属于你的专属陪伴契约。"
-- Reworked the home top into a dark cinematic hero inspired by the provided reference: AI partner badge, notification/settings controls, relationship chip, character portrait, and voice-call CTA.
+Create `.env.local` for real local chat:
 
-**Open Questions**
-- The activation-code redemption and schedule persistence are prototype-only; no backend validation, account binding, or local storage exists yet.
+```bash
+DEEPSEEK_API_KEY=sk-your-deepseek-api-key
+DEEPSEEK_MODEL=deepseek-v4-flash
+```
 
-**Implementation Checklist**
-- Build passes with `pnpm run build`.
-- Local page returns HTTP 200 at `http://127.0.0.1:5173/`.
-- Chrome screenshots captured for home model/chat, schedule add/delete, smart manager, memory, and personal-center states.
-- Latest home top screenshot captured at `prototype-home-premium-top-v2.png`.
+## Build
 
-**Follow-up Polish**
-- Add a second desktop/tablet layout if this becomes a responsive web product rather than a phone-first prototype.
-- Replace mock AI replies and smart-home state with real service integrations in the next implementation phase.
+```bash
+pnpm run build
+```
 
-final result: passed
+## Continuous Deployment
+
+Recommended setup:
+
+1. Push this project to a GitHub repository.
+2. Import the repository into Vercel.
+3. Use the default Vite settings:
+   - Install command: `pnpm install`
+   - Build command: `pnpm run build`
+   - Output directory: `dist`
+4. Add environment variables in Vercel:
+   - `DEEPSEEK_API_KEY`: your DeepSeek API key
+   - `DEEPSEEK_MODEL`: optional, defaults to `deepseek-v4-flash`
+   - `QWEATHER_API_KEY`: the API Key created in the QWeather Console
+   - `QWEATHER_API_HOST`: the project-specific API Host from QWeather Console Settings, e.g. `abcxyz.qweatherapi.com`
+   - `ACTIVATION_CODES`: comma-separated activation codes
+   - `AI_COMPANION_STORE_PATH`: optional local JSON-store path for prototype data
+5. Every future code update pushed to GitHub will update the same Vercel project link.
+
+## DeepSeek Chat
+
+The browser calls `/api/chat`; the serverless route reads `DEEPSEEK_API_KEY` and forwards messages to DeepSeek. Do not put the API key in frontend code.
+
+The chat API now supports DeepSeek tool calling:
+
+- `control_device`: controls a user's saved device.
+- `get_weather`: queries QWeather for live weather using the user's saved city. The request uses your project-specific API Host and `X-QW-Api-Key` header; device and weather intents are forced through tools before normal chat.
+
+Device CRUD lives at `/api/devices` and requires the activated `x-user-id` header. Activation and profile collection live at `/api/activate`.
+
+Plain `pnpm run dev` also serves `/api/chat` locally.
+
+## Database
+
+Prototype data uses a file-backed store when no production database adapter is configured. SQL migrations for a real database are in `migrations/`:
+
+- `001_create_users_and_profiles.sql`
+- `002_create_devices.sql`

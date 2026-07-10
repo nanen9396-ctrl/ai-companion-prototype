@@ -1597,7 +1597,7 @@ button {
 }
 
 .appearance-option img,
-.appearance-auto {
+.appearance-option .appearance-auto {
   width: 54px;
   height: 72px;
   grid-row: span 2;
@@ -1607,7 +1607,7 @@ button {
   background: #ede7ef;
 }
 
-.appearance-auto {
+.appearance-option .appearance-auto {
   display: grid;
   place-items: center;
   color: #7863a5;

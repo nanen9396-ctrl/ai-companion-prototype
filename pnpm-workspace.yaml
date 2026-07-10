@@ -1,3 +1,4 @@
-cache=C:\Users\南派大星\Documents\Codex\2026-06-29\wo\outputs\ai-companion-prototype\.npm-cache
-fund=false
-audit=false
+allowBuilds:
+  esbuild: true
+onlyBuiltDependencies:
+  - esbuild
