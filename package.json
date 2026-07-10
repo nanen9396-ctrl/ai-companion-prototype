@@ -1,19 +1,6 @@
-{
-  "name": "ai-companion-prototype",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1"
-  },
-  "dependencies": {
-    "@vitejs/plugin-react": "5.0.4",
-    "lucide-react": "^1.21.0",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "three": "0.160.0",
-    "vite": "6.4.2"
-  }
-}
+DEEPSEEK_API_KEY=sk-your-deepseek-api-key
+DEEPSEEK_MODEL=deepseek-v4-flash
+WEATHER_API_KEY=your-weather-api-key
+WEATHER_API_PROVIDER=
+ACTIVATION_CODES=XIA-2026,NANEN-2026,AI-COMPANION-001
+AI_COMPANION_STORE_PATH=
