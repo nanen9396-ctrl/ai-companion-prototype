@@ -18,6 +18,8 @@ const PREFERENCE_PROMPTS = {
   protective: "用户偏好：护短更明显。遇到压力、冲突、安排和家居安全时更可靠、更有行动感。",
 };
 
+const WEATHER_RESPONSE_PROMPT = `天气表达规范：天气工具已经给出唯一可信的实时事实。请用夏萧因克制、亲近的语气，把回复组织为 2-3 句：先自然说出所在城市的天气和体感，再基于已返回的温度、体感或风速给出一条具体的出门建议，最后补一句简短关怀。可以有画面感，但不得编造未返回的降雨、预报、空气质量、紫外线、湿度、时间或设备状态；不要机械复述工具原文。`;
+
 const tools = [
   {
     type: "function",
@@ -343,12 +345,16 @@ export default async function handler(req, res) {
       let devicesChanged = false;
       let responseDevices = currentDevices;
       let weatherError = "";
+      let weatherQueried = false;
 
       for (const toolCall of toolCalls) {
         const name = toolCall.function?.name || toolCall.name;
         const args = parseToolArgs(toolCall.function?.arguments || toolCall.arguments);
         const result = await runToolCall(toolCall, userId, profile, responseDevices);
-        if (name === "get_weather" && /^(还没有|和风天气)/.test(String(result))) weatherError = String(result);
+        if (name === "get_weather") {
+          if (/^(还没有|和风天气)/.test(String(result))) weatherError = String(result);
+          else weatherQueried = true;
+        }
         if (name === "control_device") {
           devicesChanged = true;
           const localResult = applyDeviceControlToList(responseDevices, args.device_name, args.action);
@@ -366,6 +372,7 @@ export default async function handler(req, res) {
         messages: [
           ...baseMessages,
           ...toolResultMessages,
+          ...(weatherQueried ? [{ role: "system", content: WEATHER_RESPONSE_PROMPT }] : []),
           {
             role: "system",
             content: "请结合用户资料、称呼和偏好，用夏萧因的语气给出简短自然回复。不要编造工具结果之外的事实。",

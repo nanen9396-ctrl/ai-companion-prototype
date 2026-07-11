@@ -26,6 +26,8 @@ import {
   Volume2,
   X,
 } from "lucide-react";
+import { LivingGamePanel } from "./LivingGamePanel.jsx";
+import { applyMissionMove, chooseLivingMission, livingMissions, premiumBenefits } from "./livingGame.js";
 
 const companionName = "夏萧因";
 
@@ -67,7 +69,7 @@ const scenes = [
 const tabs = [
   { id: "home", label: "首页", icon: Home },
   { id: "record", label: "记录", icon: Heart },
-  { id: "smart", label: "智能管家", icon: Compass },
+  { id: "smart", label: "共同生活", icon: Compass },
   { id: "me", label: "我的", icon: User },
 ];
 
@@ -89,6 +91,7 @@ const storageKeys = {
   activation: "ai-companion.activation",
   userProfile: "ai-companion.userProfile",
   freeMessagesSent: "ai-companion.freeMessagesSent",
+  livingGame: "ai-companion.livingGame",
 };
 
 const deviceTypeOptions = ["灯", "空调", "窗帘", "插座", "音箱", "其他"];
@@ -330,6 +333,26 @@ export function App() {
   const [isReplying, setIsReplying] = useState(false);
   const [showTools, setShowTools] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [livingGame, setLivingGame] = useState(() => {
+    const stored = loadStoredValue(storageKeys.livingGame, {});
+    const fallbackMission = chooseLivingMission(livingMissions);
+    const activeMissionId = livingMissions.some((mission) => mission.id === stored.activeMissionId)
+      ? stored.activeMissionId
+      : fallbackMission.id;
+    return {
+      activeMissionId,
+      recentIds: Array.isArray(stored.recentIds) ? stored.recentIds.slice(0, 8) : [activeMissionId],
+      completedIds: Array.isArray(stored.completedIds) ? stored.completedIds.slice(0, 48) : [],
+      keepsakes: Array.isArray(stored.keepsakes) ? stored.keepsakes.slice(0, 36) : [],
+      giftedIds: Array.isArray(stored.giftedIds) ? stored.giftedIds.slice(0, 24) : [],
+      decorId: typeof stored.decorId === "string" ? stored.decorId : "",
+    };
+  });
+  const [livingSelection, setLivingSelection] = useState([]);
+  const [livingFeedback, setLivingFeedback] = useState("");
+  const [livingView, setLivingView] = useState("mission");
+  const [giftPreview, setGiftPreview] = useState(null);
+  const [giftReaction, setGiftReaction] = useState("");
 
   const isActivated = Boolean(activation?.userId);
   const isRestrictedTab = !isActivated && ["record", "smart"].includes(activeTab);
@@ -341,6 +364,7 @@ export function App() {
   const appearanceState = appearanceOptions.find((item) => item.key === appearance) || appearanceOptions[0];
   const displayModelSrc = appearanceState.src || modelState.src;
   const taskTime = splitTaskTime(newTaskTime);
+  const activeLivingMission = livingMissions.find((mission) => mission.id === livingGame.activeMissionId) || livingMissions[0];
 
   useEffect(() => {
     localStorage.setItem(storageKeys.messages, JSON.stringify(messages.slice(-80)));
@@ -386,6 +410,10 @@ export function App() {
   }, [freeMessagesSent]);
 
   useEffect(() => {
+    localStorage.setItem(storageKeys.livingGame, JSON.stringify(livingGame));
+  }, [livingGame]);
+
+  useEffect(() => {
     if (!isActivated) return;
     fetchDevices();
   }, [isActivated, activation?.userId, activeTab]);
@@ -426,6 +454,80 @@ export function App() {
 
   function addTimelineMemory(text) {
     setMemoryItems((current) => [{ date: `刚刚 ${nowLabel()}`, text }, ...current].slice(0, 12));
+  }
+
+  function refreshLivingMission() {
+    const nextMission = chooseLivingMission(livingMissions, livingGame.recentIds);
+    setLivingGame((current) => ({
+      ...current,
+      activeMissionId: nextMission.id,
+      recentIds: [nextMission.id, ...current.recentIds.filter((id) => id !== nextMission.id)].slice(0, 8),
+    }));
+    setLivingSelection([]);
+    setLivingFeedback("");
+  }
+
+  function completeLivingMission(mission) {
+    setLivingGame((current) => ({
+      ...current,
+      completedIds: current.completedIds.includes(mission.id)
+        ? current.completedIds
+        : [mission.id, ...current.completedIds].slice(0, 48),
+      keepsakes: current.keepsakes.includes(mission.keepsake)
+        ? current.keepsakes
+        : [mission.keepsake, ...current.keepsakes].slice(0, 36),
+      recentIds: [mission.id, ...current.recentIds.filter((id) => id !== mission.id)].slice(0, 8),
+    }));
+    addTimelineMemory(mission.memory);
+    addNotification({ title: "共同生活 · 新印记", text: `获得「${mission.keepsake}」`, tab: "smart" });
+    setModelTone("warm");
+  }
+
+  function handleLivingOption(optionIndex) {
+    const outcome = applyMissionMove(activeLivingMission, livingSelection, optionIndex);
+    setLivingSelection(outcome.selection);
+
+    if (outcome.completed) {
+      setLivingFeedback("他把这件小事认真收好，像收藏一段只属于你们的日常。");
+      completeLivingMission(activeLivingMission);
+      return;
+    }
+
+    if (outcome.reset) {
+      setLivingFeedback(
+        activeLivingMission.kind === "sequence"
+          ? "他轻轻按住你的手：别急，我们从第一步慢慢来。"
+          : "他看了一眼，笑着让你再挑一次。",
+      );
+      return;
+    }
+
+    setLivingFeedback(
+      activeLivingMission.kind === "sequence"
+        ? `很好，接下来还有 ${activeLivingMission.answer.length - outcome.selection.length} 步。`
+        : "再选一样，看看今晚的默契会落在哪里。",
+    );
+  }
+
+  function experienceGift(item) {
+    setLivingGame((current) => ({
+      ...current,
+      giftedIds: current.giftedIds.includes(item.id) ? current.giftedIds : [item.id, ...current.giftedIds].slice(0, 24),
+      decorId: item.category === "布置" ? item.id : current.decorId,
+    }));
+    addTimelineMemory(item.memory);
+    addNotification({ title: "心意小铺 · 心意已收下", text: item.name, tab: "smart" });
+    setGiftReaction(item.reaction);
+    setModelTone("warm");
+
+    if (item.id === "moon-coat") setAppearance("moon");
+    if (item.id === "silver-hairpin") setAppearance("warm");
+    if (item.id === "evening-suit") setAppearance("guard");
+  }
+
+  function openPremiumPanel() {
+    setActiveTab("me");
+    setProfilePanel("premium");
   }
 
   function addNotification(item) {
@@ -1010,11 +1112,31 @@ export function App() {
           </section>
         </div>
 
-        <section className="smart-butler-stage" aria-label="智能管家形象">
-          <img src="/assets/smart-butler-xiaxiaoyin.png" alt={`${companionName} 智能管家形象`} />
-        </section>
+        <LivingGamePanel
+          mission={activeLivingMission}
+          livingGame={livingGame}
+          selection={livingSelection}
+          feedback={livingFeedback}
+          view={livingView}
+          giftPreview={giftPreview}
+          giftReaction={giftReaction}
+          modelSrc={displayModelSrc}
+          onSelectOption={handleLivingOption}
+          onRefreshMission={refreshLivingMission}
+          onViewChange={setLivingView}
+          onPreviewGift={(item) => {
+            setGiftPreview(item);
+            setGiftReaction("");
+          }}
+          onExperienceGift={experienceGift}
+          onOpenPremium={openPremiumPanel}
+        />
 
-        <section className="surface smart-home" aria-labelledby="home-title">
+        <details className="surface smart-home living-device-tools">
+          <summary>
+            <span>小屋场景与设备</span>
+            <small>可选生活工具</small>
+          </summary>
           <div className="section-heading">
             <div>
               <span className="title-mark" />
@@ -1103,21 +1225,7 @@ export function App() {
               )}
             </div>
           </section>
-        </section>
-
-        <section className="risk-banner" aria-label="风险设备操作确认">
-          <Lock size={30} />
-          <div>
-            <strong>风险设备操作确认</strong>
-            <p>即将操作「电暖器」· 设置 28°C。确认周围环境安全，远离易燃物品。</p>
-          </div>
-          <button className="secondary-button" type="button" onClick={() => setPendingScene("warm")}>
-            取消
-          </button>
-          <button className="primary-button" type="button" onClick={() => setPendingScene("warm")}>
-            确认安全
-          </button>
-        </section>
+        </details>
 
         <form
           className="composer"
@@ -1212,6 +1320,14 @@ export function App() {
               <SlidersHorizontal size={18} />
               <span>偏好</span>
             </button>
+            <button
+              className={profilePanel === "premium" ? "active" : ""}
+              type="button"
+              onClick={() => setProfilePanel((panel) => (panel === "premium" ? null : "premium"))}
+            >
+              <Heart size={18} />
+              <span>高级版</span>
+            </button>
           </div>
 
           {profilePanel === "preferences" && (
@@ -1282,6 +1398,32 @@ export function App() {
                   ))}
                 </div>
               )}
+            </section>
+          )}
+
+          {profilePanel === "premium" && (
+            <section className="premium-panel" aria-label="高级版预览">
+              <span className="profile-kicker">高级版预览</span>
+              <h3>把陪伴，延伸成更完整的共同生活。</h3>
+              <ul>
+                {premiumBenefits.map((benefit) => (
+                  <li key={benefit}>
+                    <Check size={16} />
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
+              <p>前期先开放内容体验，支付能力会在服务正式上线时接入。</p>
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => {
+                  setActiveTab("smart");
+                  setLivingView("shop");
+                }}
+              >
+                前往心意小铺
+              </button>
             </section>
           )}
 
