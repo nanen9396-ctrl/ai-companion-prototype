@@ -552,6 +552,19 @@ export function App() {
     );
   }
 
+  function completeLivingMiniGame() {
+    setLivingFeedback("你们配合得刚刚好，这一刻已经被他认真收下。");
+    completeLivingMission(activeLivingMission);
+  }
+
+  function selectOwnedOutfit(outfitId) {
+    setLivingGame((current) => {
+      if (outfitId !== "home" && !current.giftedIds.includes(outfitId)) return current;
+      return { ...current, outfitId };
+    });
+    setModelTone("warm");
+  }
+
   function experienceGift(item) {
     setLivingGame((current) => ({
       ...current,
@@ -1171,6 +1184,8 @@ export function App() {
           onViewChange={changeLivingView}
           onPreviewGift={previewLivingItem}
           onExperienceGift={experienceGift}
+          onCompleteMiniGame={completeLivingMiniGame}
+          onSelectOwnedOutfit={selectOwnedOutfit}
           onOpenPremium={openPremiumPanel}
         />
 

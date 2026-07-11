@@ -294,6 +294,7 @@ export const houseRooms = [
   { id: "kitchen", label: "厨房", note: "料理与夜茶", quadrant: "top-right" },
   { id: "wardrobe", label: "衣帽间", note: "换装与设计", quadrant: "bottom-left" },
   { id: "balcony", label: "阳台", note: "花草与夜空", quadrant: "bottom-right" },
+  { id: "bedroom", label: "卧室", note: "休息与衣橱", quadrant: "bottom-center" },
 ];
 
 export const missionLocations = {
@@ -301,32 +302,32 @@ export const missionLocations = {
   "sea-salt-stew": { room: "kitchen", objectId: "spice-board", label: "香料盘", x: 82, y: 65 },
   "strawberry-tart": { room: "kitchen", objectId: "oven", label: "烤箱", x: 84, y: 42 },
   "rainy-tea": { room: "kitchen", objectId: "tea-set", label: "茶具", x: 44, y: 64 },
-  "silk-swatch": { room: "wardrobe", objectId: "fabric-table", label: "布料台", x: 76, y: 65 },
-  "poster-layout": { room: "wardrobe", objectId: "design-desk", label: "设计桌", x: 78, y: 53 },
+  "silk-swatch": { room: "wardrobe", objectId: "fabric-table", label: "布料台", x: 88, y: 61 },
+  "poster-layout": { room: "wardrobe", objectId: "design-desk", label: "设计桌", x: 88, y: 49 },
   "window-vase": { room: "balcony", objectId: "flower-vase", label: "窗边花器", x: 69, y: 68 },
-  "lamp-shade": { room: "living", objectId: "floor-lamp", label: "落地灯", x: 11, y: 36 },
+  "lamp-shade": { room: "bedroom", objectId: "bedside-lamp", label: "床头灯", x: 12, y: 40 },
   "demo-take": { room: "living", objectId: "music-console", label: "录音台", x: 43, y: 46 },
   "piano-night": { room: "living", objectId: "piano", label: "钢琴", x: 60, y: 47 },
-  "concert-corsage": { room: "wardrobe", objectId: "jewel-box", label: "首饰盒", x: 22, y: 62 },
+  "concert-corsage": { room: "wardrobe", objectId: "jewel-box", label: "首饰盒", x: 38, y: 52 },
   "vinyl-shelf": { room: "living", objectId: "record-player", label: "唱片机", x: 84, y: 43 },
   "bookshelf-order": { room: "living", objectId: "bookshelf", label: "书架", x: 24, y: 27 },
-  "blanket-fort": { room: "living", objectId: "sofa", label: "沙发", x: 16, y: 64 },
-  "laundry-note": { room: "wardrobe", objectId: "coat-rack", label: "外套口袋", x: 54, y: 34 },
+  "blanket-fort": { room: "bedroom", objectId: "bed", label: "床边毛毯", x: 43, y: 67 },
+  "laundry-note": { room: "bedroom", objectId: "bedroom-closet", label: "卧室衣柜", x: 55, y: 34 },
   "balcony-herbs": { room: "balcony", objectId: "herb-planter", label: "香草盆", x: 73, y: 72 },
   "night-market": { room: "balcony", objectId: "ticket-bowl", label: "纪念小碟", x: 39, y: 73 },
   "station-flowers": { room: "balcony", objectId: "flower-rack", label: "花架", x: 85, y: 50 },
-  "museum-route": { room: "wardrobe", objectId: "memory-board", label: "纪念板", x: 85, y: 32 },
+  "museum-route": { room: "wardrobe", objectId: "memory-board", label: "纪念板", x: 94, y: 30 },
   "morning-train": { room: "balcony", objectId: "window-seat", label: "窗边长椅", x: 25, y: 68 },
   "tide-lantern": { room: "balcony", objectId: "tide-lantern", label: "潮汐灯", x: 14, y: 75 },
-  "royal-letter": { room: "wardrobe", objectId: "letter-desk", label: "未寄出的信", x: 73, y: 59 },
+  "royal-letter": { room: "bedroom", objectId: "letter-desk", label: "床边书桌", x: 82, y: 62 },
   "star-map": { room: "balcony", objectId: "star-map", label: "星图", x: 49, y: 27 },
   "winter-garden": { room: "balcony", objectId: "rose-planter", label: "白蔷薇", x: 89, y: 68 },
 };
 
 export const livingShopItems = [
-  { id: "moon-coat", category: "外观", sceneRoom: "wardrobe", name: "月白长外套", price: "¥12", detail: "在衣帽间换上一套只属于深夜小屋的月白外观。", reaction: "他低头理好衣袖，说这身是为你留的。", memory: "你为他选了一件月白长外套。" },
-  { id: "silver-hairpin", category: "外观", sceneRoom: "wardrobe", name: "银羽发饰", price: "¥6", detail: "在穿衣镜前，为他的白发添上一枚银羽发饰。", reaction: "他抬手碰了碰发饰，别开脸说还算合适。", memory: "你替他别上了一枚银羽发饰。" },
-  { id: "evening-suit", category: "外观", sceneRoom: "wardrobe", name: "暮色礼服", price: "¥18", detail: "在衣帽间换上晚间展览与特别约会的礼服。", reaction: "他在镜前停了一瞬，回头问你是不是喜欢。", memory: "他穿上了你挑的暮色礼服。" },
+  { id: "moon-coat", category: "外观", sceneRoom: "bedroom", name: "月白长外套", price: "¥12", detail: "收进卧室衣橱，之后可以随时换上这套月白外观。", reaction: "他低头理好衣袖，说这身是为你留的。", memory: "你为他选了一件月白长外套。" },
+  { id: "silver-hairpin", category: "外观", sceneRoom: "bedroom", name: "银羽发饰", price: "¥6", detail: "收进卧室衣橱，在穿衣镜前随时为他戴上。", reaction: "他抬手碰了碰发饰，别开脸说还算合适。", memory: "你替他别上了一枚银羽发饰。" },
+  { id: "evening-suit", category: "外观", sceneRoom: "bedroom", name: "暮色礼服", price: "¥18", detail: "收进卧室衣橱，为晚间展览与特别约会准备。", reaction: "他在镜前停了一瞬，回头问你是不是喜欢。", memory: "他穿上了你挑的暮色礼服。" },
   { id: "white-roses", category: "礼物", sceneRoom: "balcony", name: "一束白玫瑰", price: "¥6", detail: "把花束放到阳台花架，触发一封简短回信。", reaction: "他把花放到窗边，替你写了一封只有三行的信。", memory: "你送给他一束白玫瑰。" },
   { id: "music-box", category: "礼物", sceneRoom: "living", name: "口袋音乐盒", price: "¥12", detail: "把音乐盒放到客厅茶几，触发专属旋律片段。", reaction: "他转动发条，让旋律在夜里慢慢响完。", memory: "你送给他一只口袋音乐盒。" },
   { id: "ink-pen", category: "礼物", sceneRoom: "wardrobe", name: "星墨钢笔", price: "¥8", detail: "把钢笔放到设计桌，触发一首即兴短诗。", reaction: "他用新钢笔写下一句诗，却不肯让你立刻看完。", memory: "你送给他一支星墨钢笔。" },
@@ -340,6 +341,70 @@ export const premiumBenefits = [
   "限定服饰、发型与小屋外观",
   "来信、旋律片段与节日事件",
 ];
+
+export const miniGameConfigs = {
+  "midnight-pasta": {
+    type: "timing",
+    title: "收汁时刻",
+    instruction: "光点进入金色区域时，点一下锅。",
+  },
+  "strawberry-tart": {
+    type: "timing",
+    title: "糖霜落点",
+    instruction: "把糖霜停在最合适的位置。",
+  },
+  "bookshelf-order": {
+    type: "memory",
+    title: "书签配对",
+    instruction: "翻开六张书签，找出三组相同印记。",
+    items: ["月", "海", "蔷薇"],
+  },
+  "star-map": {
+    type: "memory",
+    title: "双星记忆",
+    instruction: "找出成对亮起的三组星象。",
+    items: ["北星", "潮星", "晨星"],
+  },
+  "piano-night": {
+    type: "rhythm",
+    title: "四拍合奏",
+    instruction: "先听他的示范，再重复四个节拍。",
+    pads: ["月", "潮", "风", "心"],
+    pattern: [0, 2, 1, 3],
+  },
+  "demo-take": {
+    type: "rhythm",
+    title: "小样节拍",
+    instruction: "记住亮起顺序，和他一起完成录音。",
+    pads: ["低", "轻", "远", "近"],
+    pattern: [1, 3, 0, 2],
+  },
+};
+
+export function evaluateTimingAttempt(progress, start = 0.42, end = 0.58) {
+  return Number.isFinite(progress) && progress >= start && progress <= end;
+}
+
+export function createMemoryDeck(items, random = Math.random) {
+  const deck = items.flatMap((value, index) => [
+    { id: `${index}-a`, value },
+    { id: `${index}-b`, value },
+  ]);
+
+  for (let index = deck.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [deck[index], deck[swapIndex]] = [deck[swapIndex], deck[index]];
+  }
+
+  return deck;
+}
+
+export function evaluateRhythmInput(pattern, input) {
+  const hasMismatch = input.some((value, index) => value !== pattern[index]);
+  if (hasMismatch) return { status: "reset", nextIndex: 0 };
+  if (input.length === pattern.length) return { status: "complete", nextIndex: pattern.length };
+  return { status: "continue", nextIndex: input.length };
+}
 
 export function chooseLivingMission(missions = livingMissions, recentIds = [], random = Math.random) {
   const freshMissions = missions.filter((mission) => !recentIds.includes(mission.id));

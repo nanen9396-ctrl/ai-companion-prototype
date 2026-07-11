@@ -1,4 +1,6 @@
+import { useState } from "react";
 import {
+  BedDouble,
   Check,
   ChefHat,
   Crown,
@@ -13,13 +15,15 @@ import {
   X,
 } from "lucide-react";
 import { ClickSpark } from "./ClickSpark.jsx";
-import { houseRooms, livingShopItems, missionLocations } from "./livingGame.js";
+import { LivingMiniGame } from "./LivingMiniGame.jsx";
+import { houseRooms, livingShopItems, miniGameConfigs, missionLocations } from "./livingGame.js";
 
 const roomIcons = {
   living: Home,
   kitchen: ChefHat,
   wardrobe: Palette,
   balcony: MapPin,
+  bedroom: BedDouble,
 };
 
 const categoryIcons = {
@@ -46,6 +50,12 @@ const outfitAssets = {
 
 const shopCategories = ["外观", "礼物", "布置"];
 
+const defaultOutfit = {
+  id: "home",
+  name: "夜居衬衫",
+  detail: "他在小屋里最常穿的那一套。",
+};
+
 function itemActionLabel(item, active) {
   if (active) return "已在小屋中";
   if (item.category === "外观") return "换上看看";
@@ -71,8 +81,11 @@ export function LivingGamePanel({
   onViewChange,
   onPreviewGift,
   onExperienceGift,
+  onCompleteMiniGame,
+  onSelectOwnedOutfit,
   onOpenPremium,
 }) {
+  const [closetOpen, setClosetOpen] = useState(false);
   const activeRoom = houseRooms.find((room) => room.id === livingGame.activeRoom) || houseRooms[0];
   const RoomIcon = roomIcons[activeRoom.id];
   const CategoryIcon = categoryIcons[mission.category] || Sparkles;
@@ -88,6 +101,11 @@ export function LivingGamePanel({
     : livingShopItems.find((item) => item.id === livingGame.decorId);
   const showGift = giftItem?.sceneRoom === activeRoom.id;
   const showDecor = decorItem?.sceneRoom === activeRoom.id;
+  const ownedOutfits = [
+    defaultOutfit,
+    ...livingShopItems.filter((item) => item.category === "外观" && livingGame.giftedIds.includes(item.id)),
+  ];
+  const hasMiniGame = Boolean(miniGameConfigs[mission.id]);
 
   function isItemActive(item) {
     if (item.category === "外观") return livingGame.outfitId === item.id;
@@ -102,7 +120,7 @@ export function LivingGamePanel({
           className={`living-house-stage room-${activeRoom.id} ${showDecor ? `preview-decor-${decorItem.id}` : ""}`}
           aria-labelledby="living-house-title"
         >
-          <img className="house-map" src="/assets/living-house.png" alt="包含客厅、厨房、衣帽间和阳台的共同小屋" />
+          <img className="house-map" src="/assets/living-house-v2.png" alt="包含客厅、厨房、衣帽间、阳台和卧室的共同小屋" />
           <div className="house-vignette" />
 
           <header className="house-toolbar">
@@ -116,6 +134,7 @@ export function LivingGamePanel({
             </button>
           </header>
 
+          <span className="house-character-shadow" aria-hidden="true" />
           <img className="house-character" src={characterSrc} alt={`夏萧因在${activeRoom.label}中`} />
 
           {showGift && (
@@ -150,6 +169,52 @@ export function LivingGamePanel({
             );
           })}
 
+          {view === "mission" && activeRoom.id === "bedroom" && (
+            <>
+              <button
+                className={`bedroom-closet-trigger ${closetOpen ? "active" : ""}`}
+                type="button"
+                onClick={() => setClosetOpen((current) => !current)}
+                aria-expanded={closetOpen}
+              >
+                <Palette size={17} />
+                打开衣橱
+              </button>
+              {closetOpen && (
+                <aside className="bedroom-closet" aria-label="卧室衣橱">
+                  <header>
+                    <div>
+                      <strong>他的衣橱</strong>
+                      <span>心意小铺中的服饰会收进这里</span>
+                    </div>
+                    <button type="button" onClick={() => setClosetOpen(false)} aria-label="收起衣橱">
+                      <X size={17} />
+                    </button>
+                  </header>
+                  <div className="bedroom-outfits">
+                    {ownedOutfits.map((item) => {
+                      const active = livingGame.outfitId === item.id;
+                      return (
+                        <button
+                          className={active ? "active" : ""}
+                          data-closet-outfit={item.id}
+                          key={item.id}
+                          type="button"
+                          onClick={() => onSelectOwnedOutfit(item.id)}
+                          aria-pressed={active}
+                        >
+                          <span><img src={outfitAssets[item.id]} alt="" /></span>
+                          <strong>{item.name}</strong>
+                          <small>{active ? "正在穿" : "换上"}</small>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </aside>
+              )}
+            </>
+          )}
+
           <nav className="house-room-nav" aria-label="切换房间">
             {houseRooms.map((room) => {
               const Icon = roomIcons[room.id];
@@ -158,7 +223,10 @@ export function LivingGamePanel({
                   className={room.id === activeRoom.id ? "active" : ""}
                   key={room.id}
                   type="button"
-                  onClick={() => onChangeRoom(room.id)}
+                  onClick={() => {
+                    setClosetOpen(false);
+                    onChangeRoom(room.id);
+                  }}
                   aria-pressed={room.id === activeRoom.id}
                 >
                   <Icon size={17} />
@@ -208,28 +276,34 @@ export function LivingGamePanel({
               </div>
             ) : (
               <>
-                <div className="living-prompt">
-                  <strong>{mission.prompt}</strong>
-                  <span>{interactionHints[mission.kind]}</span>
-                </div>
-                <div className={`living-options ${mission.kind}`}>
-                  {mission.options.map((option, index) => {
-                    const selected = selection.includes(index);
-                    return (
-                      <button
-                        className={selected ? "selected" : ""}
-                        key={option}
-                        type="button"
-                        onClick={() => onSelectOption(index)}
-                        aria-pressed={selected}
-                      >
-                        {mission.kind === "sequence" && <small>{selection.length + 1}</small>}
-                        <span>{option}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className={`living-feedback ${feedback ? "visible" : ""}`} aria-live="polite">{feedback || " "}</p>
+                {hasMiniGame ? (
+                  <LivingMiniGame key={mission.id} missionId={mission.id} onComplete={onCompleteMiniGame} />
+                ) : (
+                  <>
+                    <div className="living-prompt">
+                      <strong>{mission.prompt}</strong>
+                      <span>{interactionHints[mission.kind]}</span>
+                    </div>
+                    <div className={`living-options ${mission.kind}`}>
+                      {mission.options.map((option, index) => {
+                        const selected = selection.includes(index);
+                        return (
+                          <button
+                            className={selected ? "selected" : ""}
+                            key={option}
+                            type="button"
+                            onClick={() => onSelectOption(index)}
+                            aria-pressed={selected}
+                          >
+                            {mission.kind === "sequence" && <small>{selection.length + 1}</small>}
+                            <span>{option}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className={`living-feedback ${feedback ? "visible" : ""}`} aria-live="polite">{feedback || " "}</p>
+                  </>
+                )}
               </>
             )}
           </section>
