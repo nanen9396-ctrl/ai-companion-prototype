@@ -27,7 +27,7 @@ import {
   X,
 } from "lucide-react";
 import { LivingGamePanel } from "./LivingGamePanel.jsx";
-import { applyMissionMove, chooseLivingMission, livingMissions, premiumBenefits } from "./livingGame.js";
+import { applyMissionMove, chooseRoomMissions, houseRooms, livingMissions, missionLocations, premiumBenefits } from "./livingGame.js";
 
 const companionName = "夏萧因";
 
@@ -335,22 +335,34 @@ export function App() {
   const [showEmoji, setShowEmoji] = useState(false);
   const [livingGame, setLivingGame] = useState(() => {
     const stored = loadStoredValue(storageKeys.livingGame, {});
-    const fallbackMission = chooseLivingMission(livingMissions);
-    const activeMissionId = livingMissions.some((mission) => mission.id === stored.activeMissionId)
-      ? stored.activeMissionId
-      : fallbackMission.id;
+    const activeRoom = houseRooms.some((room) => room.id === stored.activeRoom) ? stored.activeRoom : "living";
+    const recentIds = Array.isArray(stored.recentIds) ? stored.recentIds.slice(0, 8) : [];
+    const storedRoomMissionIds = Array.isArray(stored.roomMissionIds)
+      ? stored.roomMissionIds
+          .filter((id) => livingMissions.some((mission) => mission.id === id) && missionLocations[id]?.room === activeRoom)
+          .slice(0, 4)
+      : [];
+    const roomMissionIds = storedRoomMissionIds.length
+      ? storedRoomMissionIds
+      : chooseRoomMissions(livingMissions, activeRoom, recentIds).map((mission) => mission.id);
+    const activeMissionId = roomMissionIds.includes(stored.activeMissionId) ? stored.activeMissionId : roomMissionIds[0];
     return {
       activeMissionId,
-      recentIds: Array.isArray(stored.recentIds) ? stored.recentIds.slice(0, 8) : [activeMissionId],
+      activeRoom,
+      roomMissionIds,
+      recentIds,
       completedIds: Array.isArray(stored.completedIds) ? stored.completedIds.slice(0, 48) : [],
       keepsakes: Array.isArray(stored.keepsakes) ? stored.keepsakes.slice(0, 36) : [],
       giftedIds: Array.isArray(stored.giftedIds) ? stored.giftedIds.slice(0, 24) : [],
       decorId: typeof stored.decorId === "string" ? stored.decorId : "",
+      outfitId: typeof stored.outfitId === "string" ? stored.outfitId : "home",
+      giftId: typeof stored.giftId === "string" ? stored.giftId : "",
     };
   });
   const [livingSelection, setLivingSelection] = useState([]);
   const [livingFeedback, setLivingFeedback] = useState("");
   const [livingView, setLivingView] = useState("mission");
+  const [livingMissionOpen, setLivingMissionOpen] = useState(false);
   const [giftPreview, setGiftPreview] = useState(null);
   const [giftReaction, setGiftReaction] = useState("");
 
@@ -365,6 +377,9 @@ export function App() {
   const displayModelSrc = appearanceState.src || modelState.src;
   const taskTime = splitTaskTime(newTaskTime);
   const activeLivingMission = livingMissions.find((mission) => mission.id === livingGame.activeMissionId) || livingMissions[0];
+  const visibleLivingMissions = livingGame.roomMissionIds
+    .map((id) => livingMissions.find((mission) => mission.id === id))
+    .filter(Boolean);
 
   useEffect(() => {
     localStorage.setItem(storageKeys.messages, JSON.stringify(messages.slice(-80)));
@@ -456,15 +471,43 @@ export function App() {
     setMemoryItems((current) => [{ date: `刚刚 ${nowLabel()}`, text }, ...current].slice(0, 12));
   }
 
-  function refreshLivingMission() {
-    const nextMission = chooseLivingMission(livingMissions, livingGame.recentIds);
+  function refreshLivingMissions(roomId = livingGame.activeRoom) {
+    const nextMissions = chooseRoomMissions(livingMissions, roomId, livingGame.recentIds);
     setLivingGame((current) => ({
       ...current,
-      activeMissionId: nextMission.id,
-      recentIds: [nextMission.id, ...current.recentIds.filter((id) => id !== nextMission.id)].slice(0, 8),
+      activeRoom: roomId,
+      roomMissionIds: nextMissions.map((mission) => mission.id),
+      activeMissionId: nextMissions[0]?.id || current.activeMissionId,
     }));
     setLivingSelection([]);
     setLivingFeedback("");
+    setLivingMissionOpen(false);
+  }
+
+  function changeLivingRoom(roomId) {
+    refreshLivingMissions(roomId);
+  }
+
+  function openLivingMission(missionId) {
+    setLivingGame((current) => ({ ...current, activeMissionId: missionId }));
+    setLivingSelection([]);
+    setLivingFeedback("");
+    setLivingMissionOpen(true);
+  }
+
+  function changeLivingView(nextView) {
+    setLivingView(nextView);
+    setLivingMissionOpen(false);
+    if (nextView === "mission") {
+      setGiftPreview(null);
+      setGiftReaction("");
+    }
+  }
+
+  function previewLivingItem(item) {
+    setGiftPreview(item);
+    setGiftReaction("");
+    if (item.sceneRoom && item.sceneRoom !== livingGame.activeRoom) refreshLivingMissions(item.sceneRoom);
   }
 
   function completeLivingMission(mission) {
@@ -514,15 +557,13 @@ export function App() {
       ...current,
       giftedIds: current.giftedIds.includes(item.id) ? current.giftedIds : [item.id, ...current.giftedIds].slice(0, 24),
       decorId: item.category === "布置" ? item.id : current.decorId,
+      outfitId: item.category === "外观" ? item.id : current.outfitId,
+      giftId: item.category === "礼物" ? item.id : current.giftId,
     }));
     addTimelineMemory(item.memory);
     addNotification({ title: "心意小铺 · 心意已收下", text: item.name, tab: "smart" });
     setGiftReaction(item.reaction);
     setModelTone("warm");
-
-    if (item.id === "moon-coat") setAppearance("moon");
-    if (item.id === "silver-hairpin") setAppearance("warm");
-    if (item.id === "evening-suit") setAppearance("guard");
   }
 
   function openPremiumPanel() {
@@ -1114,20 +1155,21 @@ export function App() {
 
         <LivingGamePanel
           mission={activeLivingMission}
+          visibleMissions={visibleLivingMissions}
           livingGame={livingGame}
           selection={livingSelection}
           feedback={livingFeedback}
           view={livingView}
+          missionOpen={livingMissionOpen}
           giftPreview={giftPreview}
           giftReaction={giftReaction}
-          modelSrc={displayModelSrc}
           onSelectOption={handleLivingOption}
-          onRefreshMission={refreshLivingMission}
-          onViewChange={setLivingView}
-          onPreviewGift={(item) => {
-            setGiftPreview(item);
-            setGiftReaction("");
-          }}
+          onChangeRoom={changeLivingRoom}
+          onOpenMission={openLivingMission}
+          onCloseMission={() => setLivingMissionOpen(false)}
+          onRefreshMissions={refreshLivingMissions}
+          onViewChange={changeLivingView}
+          onPreviewGift={previewLivingItem}
           onExperienceGift={experienceGift}
           onOpenPremium={openPremiumPanel}
         />
