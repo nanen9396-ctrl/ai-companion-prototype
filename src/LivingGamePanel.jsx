@@ -1,22 +1,34 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BedDouble,
   Check,
   ChefHat,
   Crown,
+  Droplets,
+  Flower2,
   Gift,
   Home,
   Lamp,
+  Leaf,
   MapPin,
+  MessageCircle,
   Music2,
   Palette,
-  RefreshCw,
+  Scissors,
   Sparkles,
   X,
 } from "lucide-react";
 import { ClickSpark } from "./ClickSpark.jsx";
 import { LivingMiniGame } from "./LivingMiniGame.jsx";
-import { houseRooms, livingShopItems, miniGameConfigs, missionLocations } from "./livingGame.js";
+import {
+  getHouseTimePhase,
+  getPlantStage,
+  houseRooms,
+  livingShopItems,
+  miniGameConfigs,
+  missionLocations,
+  sharedFlower,
+} from "./livingGame.js";
 
 const roomIcons = {
   living: Home,
@@ -37,8 +49,8 @@ const categoryIcons = {
 
 const interactionHints = {
   choice: "选一种你想和他一起留下的方式",
-  sequence: "按顺序完成，选错会从头再来",
-  pair: "挑出两项，错配后可以重新选择",
+  sequence: "按你的方式安排顺序，没有标准答案",
+  pair: "自由搭配两项，这次选择会被记住",
 };
 
 const outfitAssets = {
@@ -46,6 +58,14 @@ const outfitAssets = {
   "moon-coat": "/assets/living-outfit-moon.png",
   "silver-hairpin": "/assets/living-outfit-hairpin.png",
   "evening-suit": "/assets/living-outfit-evening.png",
+};
+
+const roomPoseAssets = {
+  living: "/assets/living-pose-living.png",
+  kitchen: "/assets/living-pose-kitchen.png",
+  wardrobe: "/assets/living-pose-wardrobe.png",
+  balcony: "/assets/living-pose-balcony.png",
+  bedroom: "/assets/living-pose-bedroom.png",
 };
 
 const shopCategories = ["外观", "礼物", "布置"];
@@ -77,22 +97,27 @@ export function LivingGamePanel({
   onChangeRoom,
   onOpenMission,
   onCloseMission,
-  onRefreshMissions,
   onViewChange,
   onPreviewGift,
   onExperienceGift,
   onCompleteMiniGame,
   onSelectOwnedOutfit,
+  onCarePlant,
   onOpenPremium,
 }) {
   const [closetOpen, setClosetOpen] = useState(false);
+  const [plantOpen, setPlantOpen] = useState(false);
+  const [plantFeedback, setPlantFeedback] = useState("它记得你们每一次靠近。");
+  const [timePhase, setTimePhase] = useState(() => getHouseTimePhase());
   const activeRoom = houseRooms.find((room) => room.id === livingGame.activeRoom) || houseRooms[0];
   const RoomIcon = roomIcons[activeRoom.id];
   const CategoryIcon = categoryIcons[mission.category] || Sparkles;
   const completed = livingGame.completedIds.includes(mission.id);
   const selectedItem = giftPreview || livingShopItems[0];
   const previewOutfitId = giftPreview?.category === "外观" ? giftPreview.id : livingGame.outfitId;
-  const characterSrc = outfitAssets[previewOutfitId] || outfitAssets.home;
+  const characterSrc = previewOutfitId === "home"
+    ? roomPoseAssets[activeRoom.id]
+    : outfitAssets[previewOutfitId] || outfitAssets.home;
   const giftItem = giftPreview?.category === "礼物"
     ? giftPreview
     : livingShopItems.find((item) => item.id === livingGame.giftId);
@@ -106,6 +131,24 @@ export function LivingGamePanel({
     ...livingShopItems.filter((item) => item.category === "外观" && livingGame.giftedIds.includes(item.id)),
   ];
   const hasMiniGame = Boolean(miniGameConfigs[mission.id]);
+  const plantStage = getPlantStage(livingGame.plant);
+  const stageMissionCount = visibleMissions.length + (activeRoom.id === sharedFlower.room ? 1 : 0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setTimePhase(getHouseTimePhase()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  function careForPlant(action) {
+    const feedbackByAction = {
+      water: "水落进土里时，他替你扶住了微微摇晃的花枝。",
+      fertilize: "他把用量看得很仔细，说照顾它不能着急。",
+      prune: "你们剪去一片旧叶，新芽显得更清晰了。",
+      talk: "他站在你身边，认真听你把今天说给花听。",
+    };
+    onCarePlant(action);
+    setPlantFeedback(feedbackByAction[action]);
+  }
 
   function isItemActive(item) {
     if (item.category === "外观") return livingGame.outfitId === item.id;
@@ -117,10 +160,15 @@ export function LivingGamePanel({
     <section className="living-game" aria-label="共同生活模拟小屋">
       <ClickSpark>
         <section
-          className={`living-house-stage room-${activeRoom.id} ${showDecor ? `preview-decor-${decorItem.id}` : ""}`}
+          className={`living-house-stage room-${activeRoom.id} time-${timePhase} ${showDecor ? `preview-decor-${decorItem.id}` : ""}`}
+          data-time-phase={timePhase}
           aria-labelledby="living-house-title"
         >
-          <img className="house-map" src="/assets/living-house-v2.png" alt="包含客厅、厨房、衣帽间、阳台和卧室的共同小屋" />
+          <img
+            className="house-map"
+            src={timePhase === "day" ? "/assets/living-house-day.png" : "/assets/living-house-v2.png"}
+            alt={`${timePhase === "day" ? "白天" : "夜晚"}的共同小屋，包含客厅、厨房、衣帽间、阳台和卧室`}
+          />
           <div className="house-vignette" />
 
           <header className="house-toolbar">
@@ -129,9 +177,6 @@ export function LivingGamePanel({
               <h1 id="living-house-title">{activeRoom.label}</h1>
               <p>{activeRoom.note}</p>
             </div>
-            <button type="button" onClick={onRefreshMissions} aria-label="刷新当前房间的小事件" title="换一批小事件">
-              <RefreshCw size={18} />
-            </button>
           </header>
 
           <span className="house-character-shadow" aria-hidden="true" />
@@ -168,6 +213,58 @@ export function LivingGamePanel({
               </button>
             );
           })}
+
+          {view === "mission" && activeRoom.id === sharedFlower.room && (
+            <button
+              className={`house-hotspot shared-flower-hotspot stage-${plantStage.id}`}
+              style={{ "--hotspot-x": `${sharedFlower.x}%`, "--hotspot-y": `${sharedFlower.y}%`, "--hotspot-delay": `${visibleMissions.length * 60}ms` }}
+              type="button"
+              onClick={() => setPlantOpen(true)}
+              aria-label={`${sharedFlower.name}：${plantStage.label}`}
+            >
+              <span className="hotspot-pulse" />
+              <Flower2 size={17} />
+              <span className="hotspot-label">{sharedFlower.label}</span>
+            </button>
+          )}
+
+          {plantOpen && activeRoom.id === sharedFlower.room && (
+            <aside className="plant-care-panel" aria-label="共同花朵照料">
+              <header>
+                <div>
+                  <span>共同养成 · {plantStage.label}</span>
+                  <strong>{sharedFlower.name}</strong>
+                </div>
+                <button type="button" onClick={() => setPlantOpen(false)} aria-label="收起花朵照料">
+                  <X size={17} />
+                </button>
+              </header>
+              <div className={`plant-portrait stage-${plantStage.id}`}>
+                <Flower2 size={40} />
+                <div>
+                  <strong>{plantStage.label}</strong>
+                  <span>成长 {plantStage.progress}%</span>
+                </div>
+              </div>
+              <div className="plant-meters">
+                <div>
+                  <span><Droplets size={14} />湿润</span>
+                  <i><b style={{ width: `${livingGame.plant?.hydration || 0}%` }} /></i>
+                </div>
+                <div>
+                  <span><Leaf size={14} />养分</span>
+                  <i><b style={{ width: `${livingGame.plant?.nutrition || 0}%` }} /></i>
+                </div>
+              </div>
+              <div className="plant-actions">
+                <button data-plant-action="water" type="button" onClick={() => careForPlant("water")}><Droplets size={16} />浇水</button>
+                <button data-plant-action="fertilize" type="button" onClick={() => careForPlant("fertilize")}><Leaf size={16} />施肥</button>
+                <button data-plant-action="prune" type="button" onClick={() => careForPlant("prune")}><Scissors size={16} />修剪</button>
+                <button data-plant-action="talk" type="button" onClick={() => careForPlant("talk")}><MessageCircle size={16} />陪它说话</button>
+              </div>
+              <p aria-live="polite">{plantFeedback}</p>
+            </aside>
+          )}
 
           {view === "mission" && activeRoom.id === "bedroom" && (
             <>
@@ -225,6 +322,7 @@ export function LivingGamePanel({
                   type="button"
                   onClick={() => {
                     setClosetOpen(false);
+                    setPlantOpen(false);
                     onChangeRoom(room.id);
                   }}
                   aria-pressed={room.id === activeRoom.id}
@@ -312,7 +410,7 @@ export function LivingGamePanel({
             <section className="house-idle-note" aria-live="polite">
               <RoomIcon size={18} />
               <div>
-                <strong>{visibleMissions.length} 件小事正在{activeRoom.label}等你</strong>
+                <strong>{stageMissionCount} 件小事正在{activeRoom.label}等你</strong>
                 <span>点击画面中发光的物件开始。</span>
               </div>
               <small>{livingGame.keepsakes.length} 枚生活印记</small>

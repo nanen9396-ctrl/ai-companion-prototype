@@ -27,7 +27,17 @@ import {
   X,
 } from "lucide-react";
 import { LivingGamePanel } from "./LivingGamePanel.jsx";
-import { applyMissionMove, chooseRoomMissions, houseRooms, livingMissions, missionLocations, premiumBenefits } from "./livingGame.js";
+import {
+  applyMissionMove,
+  applyPlantCare,
+  chooseRoomMissions,
+  defaultPlantState,
+  getPlantStage,
+  houseRooms,
+  livingMissions,
+  missionLocations,
+  premiumBenefits,
+} from "./livingGame.js";
 
 const companionName = "夏萧因";
 
@@ -340,7 +350,7 @@ export function App() {
     const storedRoomMissionIds = Array.isArray(stored.roomMissionIds)
       ? stored.roomMissionIds
           .filter((id) => livingMissions.some((mission) => mission.id === id) && missionLocations[id]?.room === activeRoom)
-          .slice(0, 4)
+          .slice(0, activeRoom === "balcony" ? 3 : 4)
       : [];
     const roomMissionIds = storedRoomMissionIds.length
       ? storedRoomMissionIds
@@ -357,6 +367,11 @@ export function App() {
       decorId: typeof stored.decorId === "string" ? stored.decorId : "",
       outfitId: typeof stored.outfitId === "string" ? stored.outfitId : "home",
       giftId: typeof stored.giftId === "string" ? stored.giftId : "",
+      plant: {
+        ...defaultPlantState,
+        ...(stored.plant && typeof stored.plant === "object" ? stored.plant : {}),
+        log: Array.isArray(stored.plant?.log) ? stored.plant.log.slice(0, 8) : [],
+      },
     };
   });
   const [livingSelection, setLivingSelection] = useState([]);
@@ -510,7 +525,7 @@ export function App() {
     if (item.sceneRoom && item.sceneRoom !== livingGame.activeRoom) refreshLivingMissions(item.sceneRoom);
   }
 
-  function completeLivingMission(mission) {
+  function completeLivingMission(mission, outcome = {}) {
     setLivingGame((current) => ({
       ...current,
       completedIds: current.completedIds.includes(mission.id)
@@ -521,7 +536,7 @@ export function App() {
         : [mission.keepsake, ...current.keepsakes].slice(0, 36),
       recentIds: [mission.id, ...current.recentIds.filter((id) => id !== mission.id)].slice(0, 8),
     }));
-    addTimelineMemory(mission.memory);
+    addTimelineMemory(outcome.memory || mission.memory);
     addNotification({ title: "共同生活 · 新印记", text: `获得「${mission.keepsake}」`, tab: "smart" });
     setModelTone("warm");
   }
@@ -532,16 +547,10 @@ export function App() {
 
     if (outcome.completed) {
       setLivingFeedback("他把这件小事认真收好，像收藏一段只属于你们的日常。");
-      completeLivingMission(activeLivingMission);
-      return;
-    }
-
-    if (outcome.reset) {
-      setLivingFeedback(
-        activeLivingMission.kind === "sequence"
-          ? "他轻轻按住你的手：别急，我们从第一步慢慢来。"
-          : "他看了一眼，笑着让你再挑一次。",
-      );
+      const choices = outcome.selection.map((index) => activeLivingMission.options[index]).filter(Boolean);
+      completeLivingMission(activeLivingMission, {
+        memory: `${activeLivingMission.title}：我们选择了${choices.join("、")}。`,
+      });
       return;
     }
 
@@ -552,9 +561,20 @@ export function App() {
     );
   }
 
-  function completeLivingMiniGame() {
+  function completeLivingMiniGame(outcome = {}) {
     setLivingFeedback("你们配合得刚刚好，这一刻已经被他认真收下。");
-    completeLivingMission(activeLivingMission);
+    completeLivingMission(activeLivingMission, outcome);
+  }
+
+  function careForLivingPlant(action) {
+    const beforeStage = getPlantStage(livingGame.plant);
+    const nextPlant = applyPlantCare(livingGame.plant, action);
+    const nextStage = getPlantStage(nextPlant);
+    setLivingGame((current) => ({ ...current, plant: applyPlantCare(current.plant, action) }));
+    if (beforeStage.id !== nextStage.id) {
+      addTimelineMemory(`我们一起照料的月白蔷薇长到了「${nextStage.label}」。`);
+    }
+    setModelTone("warm");
   }
 
   function selectOwnedOutfit(outfitId) {
@@ -1180,12 +1200,12 @@ export function App() {
           onChangeRoom={changeLivingRoom}
           onOpenMission={openLivingMission}
           onCloseMission={() => setLivingMissionOpen(false)}
-          onRefreshMissions={refreshLivingMissions}
           onViewChange={changeLivingView}
           onPreviewGift={previewLivingItem}
           onExperienceGift={experienceGift}
           onCompleteMiniGame={completeLivingMiniGame}
           onSelectOwnedOutfit={selectOwnedOutfit}
+          onCarePlant={careForLivingPlant}
           onOpenPremium={openPremiumPanel}
         />
 

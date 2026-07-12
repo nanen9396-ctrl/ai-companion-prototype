@@ -53,7 +53,7 @@ export const livingMissions = [
     kind: "choice",
     title: "礼服的布料",
     scene: "设计台上铺着三块布料，他难得有些拿不定主意。",
-    prompt: "选一块最适合月下展览的主布料。",
+    prompt: "月下展览的主布料，由你决定它要呈现怎样的气质。",
     options: ["雾银缎面", "暖橘绒布", "纯白亚麻"],
     answer: 0,
     memory: "他把展览礼服的第一块布料交给你决定。",
@@ -65,7 +65,7 @@ export const livingMissions = [
     kind: "sequence",
     title: "演出的海报",
     scene: "他把草图摊开，等你一起把杂乱的灵感理顺。",
-    prompt: "按完成顺序整理这张海报。",
+    prompt: "按你喜欢的创作节奏，安排这张海报的完成顺序。",
     options: ["确定留白", "放入主标题", "压上最后的印章"],
     answer: [0, 1, 2],
     memory: "我们把一张演出海报从草图完成到了最后。",
@@ -77,7 +77,7 @@ export const livingMissions = [
     kind: "pair",
     title: "窗边花器",
     scene: "午后的光落在空花器上，他让你替房间挑两样颜色。",
-    prompt: "选出能和深蓝房间相衬的两种花材。",
+    prompt: "从花材中自由搭配两种，留下你喜欢的窗边色彩。",
     options: ["白玫瑰", "浅紫鸢尾", "荧光塑料花", "黑色丝带"],
     answer: [0, 1],
     memory: "他把窗边的花器留成了我们一起挑的颜色。",
@@ -89,7 +89,7 @@ export const livingMissions = [
     kind: "choice",
     title: "一盏新的灯",
     scene: "他想让小屋的夜晚再暖一点。",
-    prompt: "这盏灯该留下怎样的光？",
+    prompt: "你希望这盏灯为房间留下怎样的光？",
     options: ["清冷月白", "柔和琥珀", "明亮晨光"],
     answer: 1,
     memory: "我们替小屋选了一盏柔和的琥珀灯。",
@@ -125,7 +125,7 @@ export const livingMissions = [
     kind: "pair",
     title: "登台前的胸针",
     scene: "演出前，他把三枚胸针放在掌心等你挑选。",
-    prompt: "选出与今晚曲目最相衬的两枚。",
+    prompt: "自由搭配两枚胸针，决定他今晚登台时的样子。",
     options: ["银月胸针", "深蓝宝石", "塑料笑脸", "荧光星星"],
     answer: [0, 1],
     memory: "登台前，他把你挑的胸针别在了衣襟上。",
@@ -137,7 +137,7 @@ export const livingMissions = [
     kind: "choice",
     title: "唱片架的一格",
     scene: "他把新唱片放到你手里，说该由你来决定它的位置。",
-    prompt: "把它放进哪一格？",
+    prompt: "你想把它放进哪一格？每个位置都会成为共同记忆。",
     options: ["最常听的那一排", "靠窗的留白处", "旅行纪念的旁边"],
     answer: 2,
     memory: "他把新唱片放进了我们的旅行纪念旁。",
@@ -161,7 +161,7 @@ export const livingMissions = [
     kind: "pair",
     title: "沙发角落",
     scene: "他想把沙发角落布置成不想出门的样子。",
-    prompt: "选出今晚该留下的两样东西。",
+    prompt: "自由挑两样东西，布置成你们今晚想待着的样子。",
     options: ["柔软毛毯", "小夜灯", "会议文件", "冷风扇"],
     answer: [0, 1],
     memory: "我们把沙发角落布置成了谁都不想离开的样子。",
@@ -173,7 +173,7 @@ export const livingMissions = [
     kind: "choice",
     title: "口袋里的纸条",
     scene: "整理衣物时，你从他的外套口袋里摸到一张空白便签。",
-    prompt: "你想在纸条上留下什么？",
+    prompt: "这张纸条没有标准写法，你想留下什么？",
     options: ["今晚早些回来", "记得照顾自己", "下次一起散步"],
     answer: 1,
     memory: "他在外套口袋里留着你写的提醒。",
@@ -185,7 +185,7 @@ export const livingMissions = [
     kind: "pair",
     title: "阳台香草",
     scene: "他把小盆栽排成一列，认真得像在安排一场仪式。",
-    prompt: "选两盆留下来照顾。",
+    prompt: "从中自由搭配两盆，作为你们想一起照顾的香草。",
     options: ["迷迭香", "罗勒", "干枯纸花", "空花盆"],
     answer: [0, 1],
     memory: "阳台上多了两盆我们一起照顾的香草。",
@@ -197,7 +197,7 @@ export const livingMissions = [
     kind: "choice",
     title: "夜市绕路",
     scene: "回家的路上，他忽然停住脚步，说不如再走一会儿。",
-    prompt: "你们该先去哪里？",
+    prompt: "今晚没有既定路线，你想先带他去哪里？",
     options: ["买一串烤栗子", "看看旧书摊", "去桥边吹风"],
     answer: 1,
     memory: "回家路上，我们在旧书摊前停了很久。",
@@ -209,7 +209,7 @@ export const livingMissions = [
     kind: "pair",
     title: "车站的花束",
     scene: "他站在花店前，难得坦白说自己不太会挑花。",
-    prompt: "替他选出两种适合带回家的花。",
+    prompt: "自由搭配两种花，把你喜欢的颜色带回家。",
     options: ["白郁金香", "浅粉玫瑰", "塑料气球", "干枝"],
     answer: [0, 1],
     memory: "车站边的花束，是他和你一起挑回家的。",
@@ -221,7 +221,7 @@ export const livingMissions = [
     kind: "sequence",
     title: "展馆的下午",
     scene: "他把地图折好，等你决定这段安静的下午该怎样开始。",
-    prompt: "按顺序安排你们的参观。",
+    prompt: "按你自己的兴趣安排参观顺序。",
     options: ["从小展厅进入", "停在喜欢的画前", "在纪念册写下日期"],
     answer: [0, 1, 2],
     memory: "我们在展馆纪念册上写下了同一个日期。",
@@ -233,7 +233,7 @@ export const livingMissions = [
     kind: "choice",
     title: "清晨的列车",
     scene: "窗外刚亮，他把靠窗的位置留给你。",
-    prompt: "路上想做哪件小事？",
+    prompt: "靠窗的这段路，你想和他怎样度过？",
     options: ["听一张旧唱片", "读完一封信", "看窗外的云"],
     answer: 2,
     memory: "清晨的列车上，我们一起看着窗外的云。",
@@ -245,7 +245,7 @@ export const livingMissions = [
     kind: "sequence",
     title: "潮汐灯的修理",
     scene: "海风掠过长廊，他把一盏熄灭的潮汐灯交给你。",
-    prompt: "按顺序让灯重新亮起来。",
+    prompt: "用你认为合适的顺序尝试唤醒这盏灯。",
     options: ["擦净灯罩", "放入月光石", "轻轻转动底座"],
     answer: [0, 1, 2],
     memory: "我们让海边长廊的一盏潮汐灯重新亮起。",
@@ -257,7 +257,7 @@ export const livingMissions = [
     kind: "choice",
     title: "未寄出的信",
     scene: "他把一封写到一半的信压在书下，问你该用哪一种结尾。",
-    prompt: "替他选一句结尾。",
+    prompt: "这封信可以有不同结尾，你想替他留下哪一句？",
     options: ["愿你安然", "等我归来", "今晚见"],
     answer: 2,
     memory: "他把一封未寄出的信，用“今晚见”作了结尾。",
@@ -281,7 +281,7 @@ export const livingMissions = [
     kind: "choice",
     title: "冬庭的温室",
     scene: "风雪被隔在玻璃外，他把温室的钥匙放到你手里。",
-    prompt: "先去看哪一处？",
+    prompt: "温室没有规定路线，你想先和他停在哪一处？",
     options: ["白蔷薇架", "雾气玻璃", "长椅边的灯"],
     answer: 0,
     memory: "冬庭的白蔷薇，是我们先一起看见的。",
@@ -342,16 +342,102 @@ export const premiumBenefits = [
   "来信、旋律片段与节日事件",
 ];
 
+export const sharedFlower = {
+  id: "shared-flower",
+  room: "balcony",
+  name: "月白蔷薇",
+  label: "我们的花",
+  x: 84,
+  y: 48,
+};
+
+export const defaultPlantState = {
+  hydration: 52,
+  nutrition: 46,
+  carePoints: 0,
+  log: [],
+};
+
 export const miniGameConfigs = {
   "midnight-pasta": {
-    type: "timing",
-    title: "收汁时刻",
-    instruction: "光点进入金色区域时，点一下锅。",
+    type: "cooking",
+    title: "深夜料理台",
+    instruction: "从食材架自由挑选 2–5 种，再决定烹饪技法。没有标准配方。",
+    ingredients: [
+      { id: "pasta", name: "意面", tags: ["醇厚"] },
+      { id: "cream", name: "淡奶油", tags: ["醇厚", "柔滑"] },
+      { id: "mushroom", name: "口蘑", tags: ["鲜香"] },
+      { id: "spinach", name: "嫩菠菜", tags: ["清新"] },
+      { id: "sea-salt", name: "海盐", tags: ["咸鲜"] },
+      { id: "lemon", name: "柠檬皮屑", tags: ["清新"] },
+      { id: "pepper", name: "黑胡椒", tags: ["辛香"] },
+      { id: "cheese", name: "帕玛森", tags: ["浓郁"] },
+    ],
+    techniques: [
+      { id: "slow-simmer", name: "慢火收汁", texture: "柔滑绵长" },
+      { id: "quick-toss", name: "大火翻拌", texture: "明亮利落" },
+      { id: "oven-bake", name: "烤箱焗香", texture: "焦香浓郁" },
+    ],
+  },
+  "sea-salt-stew": {
+    type: "cooking",
+    title: "海盐炖锅",
+    instruction: "选出今晚想留下的味道，再决定这一锅该怎样慢慢熟成。",
+    ingredients: [
+      { id: "white-fish", name: "白身鱼", tags: ["咸鲜", "轻盈"] },
+      { id: "potato", name: "小土豆", tags: ["醇厚"] },
+      { id: "tomato", name: "番茄", tags: ["酸甜", "清新"] },
+      { id: "rosemary", name: "迷迭香", tags: ["辛香"] },
+      { id: "onion", name: "甜洋葱", tags: ["甘甜"] },
+      { id: "sea-salt", name: "海盐", tags: ["咸鲜"] },
+      { id: "white-wine", name: "白葡萄汁", tags: ["清新", "果香"] },
+      { id: "butter", name: "黄油", tags: ["浓郁", "柔滑"] },
+    ],
+    techniques: [
+      { id: "clear-stew", name: "清炖", texture: "清澈温润" },
+      { id: "cream-stew", name: "奶香慢炖", texture: "稠密柔和" },
+      { id: "pan-roast", name: "先煎后炖", texture: "外焦内软" },
+    ],
   },
   "strawberry-tart": {
-    type: "timing",
-    title: "糖霜落点",
-    instruction: "把糖霜停在最合适的位置。",
+    type: "cooking",
+    title: "甜点工作台",
+    instruction: "选 2–5 种材料做出你们自己的甜点，风味由搭配决定。",
+    ingredients: [
+      { id: "strawberry", name: "草莓", tags: ["酸甜", "果香"] },
+      { id: "blueberry", name: "蓝莓", tags: ["酸甜"] },
+      { id: "custard", name: "香草卡仕达", tags: ["柔滑", "甘甜"] },
+      { id: "dark-chocolate", name: "黑巧", tags: ["微苦", "浓郁"] },
+      { id: "mint", name: "薄荷", tags: ["清新"] },
+      { id: "almond", name: "杏仁", tags: ["坚果香"] },
+      { id: "lemon", name: "柠檬", tags: ["清新", "酸甜"] },
+      { id: "sea-salt", name: "海盐", tags: ["咸鲜"] },
+    ],
+    techniques: [
+      { id: "crisp-bake", name: "酥烤", texture: "酥脆轻盈" },
+      { id: "cold-set", name: "冷藏凝固", texture: "冰凉柔滑" },
+      { id: "sugar-torch", name: "炙烤糖面", texture: "薄脆焦香" },
+    ],
+  },
+  "rainy-tea": {
+    type: "cooking",
+    title: "雨天调饮",
+    instruction: "自由选择茶底与香气，调出只属于今天的一杯。",
+    ingredients: [
+      { id: "earl-grey", name: "伯爵茶", tags: ["茶香", "清新"] },
+      { id: "oolong", name: "焙火乌龙", tags: ["茶香", "醇厚"] },
+      { id: "osmanthus", name: "桂花", tags: ["花香", "甘甜"] },
+      { id: "peach", name: "白桃", tags: ["果香", "甘甜"] },
+      { id: "mint", name: "薄荷", tags: ["清新"] },
+      { id: "honey", name: "蜂蜜", tags: ["甘甜"] },
+      { id: "milk", name: "牛奶", tags: ["柔滑", "醇厚"] },
+      { id: "lemon", name: "柠檬", tags: ["酸甜", "清新"] },
+    ],
+    techniques: [
+      { id: "warm-steep", name: "温热冲泡", texture: "温润舒展" },
+      { id: "cold-brew", name: "冷萃", texture: "清透轻盈" },
+      { id: "milk-whisk", name: "奶沫调和", texture: "细腻绵密" },
+    ],
   },
   "bookshelf-order": {
     type: "memory",
@@ -366,23 +452,121 @@ export const miniGameConfigs = {
     items: ["北星", "潮星", "晨星"],
   },
   "piano-night": {
-    type: "rhythm",
-    title: "四拍合奏",
-    instruction: "先听他的示范，再重复四个节拍。",
-    pads: ["月", "潮", "风", "心"],
-    pattern: [0, 2, 1, 3],
+    type: "harmony",
+    title: "月色和声工坊",
+    instruction: "在 C 大调中编排四个和弦。属功能需要回到主和弦，但有效路径不止一条。",
+    keyLabel: "C 大调",
+    tempo: 72,
+    tonicIds: ["I"],
+    dominantIds: ["V"],
+    predominantIds: ["ii", "IV"],
+    chords: [
+      { id: "I", label: "I", name: "C 大三和弦", role: "主功能", notes: [261.63, 329.63, 392] },
+      { id: "ii", label: "ii", name: "D 小三和弦", role: "下属功能", notes: [293.66, 349.23, 440] },
+      { id: "IV", label: "IV", name: "F 大三和弦", role: "下属功能", notes: [349.23, 440, 523.25] },
+      { id: "V", label: "V", name: "G 大三和弦", role: "属功能", notes: [392, 493.88, 587.33] },
+      { id: "vi", label: "vi", name: "A 小三和弦", role: "主功能替代", notes: [440, 523.25, 659.25] },
+    ],
   },
   "demo-take": {
-    type: "rhythm",
-    title: "小样节拍",
-    instruction: "记住亮起顺序，和他一起完成录音。",
-    pads: ["低", "轻", "远", "近"],
-    pattern: [1, 3, 0, 2],
+    type: "harmony",
+    title: "小调编曲台",
+    instruction: "在 A 小调里写四和弦段落，用 V 级制造张力，再回到 i 级。",
+    keyLabel: "A 小调",
+    tempo: 66,
+    tonicIds: ["i"],
+    dominantIds: ["V"],
+    predominantIds: ["ii°", "iv"],
+    chords: [
+      { id: "i", label: "i", name: "A 小三和弦", role: "主功能", notes: [220, 261.63, 329.63] },
+      { id: "ii°", label: "ii°", name: "B 减三和弦", role: "下属功能", notes: [246.94, 293.66, 349.23] },
+      { id: "iv", label: "iv", name: "D 小三和弦", role: "下属功能", notes: [293.66, 349.23, 440] },
+      { id: "V", label: "V", name: "E 大三和弦", role: "属功能", notes: [329.63, 415.3, 493.88] },
+      { id: "VI", label: "VI", name: "F 大三和弦", role: "主功能替代", notes: [349.23, 440, 523.25] },
+    ],
   },
 };
 
-export function evaluateTimingAttempt(progress, start = 0.42, end = 0.58) {
-  return Number.isFinite(progress) && progress >= start && progress <= end;
+export function getHouseTimePhase(date = new Date()) {
+  const hour = date.getHours();
+  return hour >= 6 && hour < 18 ? "day" : "night";
+}
+
+export function createDishResult(config, ingredientIds, techniqueId) {
+  const ingredientMap = new Map(config.ingredients.map((ingredient) => [ingredient.id, ingredient]));
+  const ingredients = [...new Set(ingredientIds)].map((id) => ingredientMap.get(id)).filter(Boolean);
+  const technique = config.techniques.find((item) => item.id === techniqueId);
+  const min = config.minIngredients || 2;
+  const max = config.maxIngredients || 5;
+
+  if (!technique || ingredients.length < min || ingredients.length > max) {
+    return { valid: false, message: `请选择 ${min}–${max} 种食材，并决定烹饪技法。` };
+  }
+
+  const tagCounts = new Map();
+  ingredients.flatMap((ingredient) => ingredient.tags).forEach((tag) => tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1));
+  const flavor = [...tagCounts.entries()].sort((first, second) => second[1] - first[1])[0]?.[0] || "平衡";
+  const first = ingredients[0].name;
+  const last = ingredients.at(-1).name;
+  const name = `${first}与${last}的${technique.name}`;
+
+  return {
+    valid: true,
+    name,
+    flavor,
+    texture: technique.texture,
+    message: `${flavor}是主调，口感${technique.texture}。`,
+    memory: `我们用${ingredients.map((item) => item.name).join("、")}，以${technique.name}做出了「${name}」。`,
+  };
+}
+
+export function evaluateHarmonyProgression(config, chordIds) {
+  if (chordIds.length !== 4) return { valid: false, score: 0, message: "先填满四个小节，再听它如何走向终点。" };
+  const chordMap = new Map(config.chords.map((chord) => [chord.id, chord]));
+  if (chordIds.some((id) => !chordMap.has(id))) return { valid: false, score: 0, message: "有一个和弦不属于当前调式。" };
+  const finalId = chordIds.at(-1);
+  if (!config.tonicIds.includes(finalId)) return { valid: false, score: 38, message: "最后还悬在空中：试着回到主和弦。" };
+  const dominantIndex = chordIds.slice(0, -1).findLastIndex((id) => config.dominantIds.includes(id));
+  if (dominantIndex < 0) return { valid: false, score: 52, message: "已经回家了，但少了属功能带来的张力。" };
+  const hasPredominant = chordIds.slice(0, dominantIndex).some((id) => config.predominantIds.includes(id));
+  const startsAtTonic = config.tonicIds.includes(chordIds[0]);
+  const score = 74 + (hasPredominant ? 16 : 0) + (startsAtTonic ? 10 : 0);
+  return {
+    valid: true,
+    score,
+    message: hasPredominant ? "下属—属—主的方向很清楚，张力也被好好接住了。" : "属和弦顺利回到主和弦，这条进行成立。",
+    memory: `我们在${config.keyLabel}里写下了 ${chordIds.join("–")} 的四和弦进行。`,
+  };
+}
+
+export function getPlantStage(plant = defaultPlantState) {
+  const points = Number(plant.carePoints) || 0;
+  if (points >= 32) return { id: "bloom", label: "月白盛放", progress: 100 };
+  if (points >= 18) return { id: "bud", label: "静静含苞", progress: Math.round((points / 32) * 100) };
+  if (points >= 8) return { id: "leaf", label: "舒展新叶", progress: Math.round((points / 32) * 100) };
+  return { id: "sprout", label: "初生嫩芽", progress: Math.round((points / 32) * 100) };
+}
+
+export function applyPlantCare(plant = defaultPlantState, action, now = new Date().toISOString()) {
+  const actions = {
+    water: { hydration: 24, nutrition: 0, points: 2, label: "浇水" },
+    fertilize: { hydration: 0, nutrition: 22, points: 3, label: "施肥" },
+    prune: { hydration: -3, nutrition: -2, points: 2, label: "修剪" },
+    talk: { hydration: 0, nutrition: 0, points: 1, label: "陪它说话" },
+  };
+  const care = actions[action];
+  if (!care) return { ...defaultPlantState, ...plant };
+  const next = {
+    ...defaultPlantState,
+    ...plant,
+    hydration: Math.max(0, Math.min(100, (Number(plant.hydration) || 0) + care.hydration)),
+    nutrition: Math.max(0, Math.min(100, (Number(plant.nutrition) || 0) + care.nutrition)),
+    carePoints: Math.min(40, (Number(plant.carePoints) || 0) + care.points),
+    lastActionAt: now,
+    [`last${action[0].toUpperCase()}${action.slice(1)}At`]: now,
+  };
+  next.log = [{ action, label: care.label, at: now }, ...(Array.isArray(plant.log) ? plant.log : [])].slice(0, 8);
+  return next;
 }
 
 export function createMemoryDeck(items, random = Math.random) {
@@ -397,13 +581,6 @@ export function createMemoryDeck(items, random = Math.random) {
   }
 
   return deck;
-}
-
-export function evaluateRhythmInput(pattern, input) {
-  const hasMismatch = input.some((value, index) => value !== pattern[index]);
-  if (hasMismatch) return { status: "reset", nextIndex: 0 };
-  if (input.length === pattern.length) return { status: "complete", nextIndex: pattern.length };
-  return { status: "continue", nextIndex: input.length };
 }
 
 export function chooseLivingMission(missions = livingMissions, recentIds = [], random = Math.random) {
@@ -421,14 +598,17 @@ export function chooseRoomMissions(
 ) {
   const roomMissions = missions.filter((mission) => missionLocations[mission.id]?.room === roomId);
   const freshMissions = roomMissions.filter((mission) => !recentIds.includes(mission.id));
-  const pool = freshMissions.length ? [...freshMissions] : [...roomMissions];
+  const repeatedMissions = roomMissions.filter((mission) => recentIds.includes(mission.id));
 
-  for (let index = pool.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(random() * (index + 1));
-    [pool[index], pool[swapIndex]] = [pool[swapIndex], pool[index]];
+  for (const pool of [freshMissions, repeatedMissions]) {
+    for (let index = pool.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(random() * (index + 1));
+      [pool[index], pool[swapIndex]] = [pool[swapIndex], pool[index]];
+    }
   }
 
-  return pool.slice(0, Math.max(0, Math.min(4, limit)));
+  const roomLimit = roomId === sharedFlower.room ? 3 : 4;
+  return [...freshMissions, ...repeatedMissions].slice(0, Math.max(0, Math.min(roomLimit, limit)));
 }
 
 export function applyMissionMove(mission, selection, optionIndex) {
@@ -437,15 +617,12 @@ export function applyMissionMove(mission, selection, optionIndex) {
   }
 
   if (mission.kind === "sequence") {
-    const expectedOption = mission.answer[selection.length];
-
-    if (optionIndex !== expectedOption) {
-      return { completed: false, reset: true, selection: [] };
-    }
-
-    const nextSelection = [...selection, optionIndex];
+    const nextSelection = selection.includes(optionIndex)
+      ? selection.filter((index) => index !== optionIndex)
+      : [...selection, optionIndex];
+    const targetLength = Array.isArray(mission.answer) ? mission.answer.length : mission.options.length;
     return {
-      completed: nextSelection.length === mission.answer.length,
+      completed: nextSelection.length === targetLength,
       reset: false,
       selection: nextSelection,
     };
@@ -459,13 +636,9 @@ export function applyMissionMove(mission, selection, optionIndex) {
     return { completed: false, reset: false, selection: nextSelection };
   }
 
-  const selectedPair = [...nextSelection].sort((first, second) => first - second);
-  const answerPair = [...mission.answer].sort((first, second) => first - second);
-  const completed = selectedPair.every((index, position) => index === answerPair[position]);
-
   return {
-    completed,
-    reset: !completed,
-    selection: completed ? nextSelection : [],
+    completed: true,
+    reset: false,
+    selection: nextSelection,
   };
 }
